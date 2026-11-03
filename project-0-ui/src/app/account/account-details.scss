@@ -1,0 +1,25 @@
+mat-dialog-content.mat-mdc-dialog-content {
+  display: flex;
+  flex-direction: column;
+}
+
+// Material sets `.mat-mdc-dialog-title + .mat-mdc-dialog-content { padding-top: 0 }`; matching that
+// selector keeps room for the first outlined field's floating label, which the scrolling content
+// area would otherwise clip.
+.mat-mdc-dialog-title + .mat-mdc-dialog-content {
+  padding-top: 12px;
+}
+
+.account-error {
+  color: var(--mat-sys-error);
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.account-email {
+  resize: none;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}

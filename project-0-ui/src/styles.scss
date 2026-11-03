@@ -1,0 +1,115 @@
+// Angular Material 3 theming. Themes emit CSS custom properties; the light theme is the
+// default and the dark theme is applied when ThemeService sets `html.dark-theme`.
+@use '@angular/material' as mat;
+@use 'app/theme/generated_theme-colors' as generated;
+@use 'sass:color';
+@use 'sass:map';
+@use 'sass:math';
+
+$brand-palette: generated.$primary-palette;
+
+@function primary-tone($tone) {
+  $previous: 0;
+  @each $stop in (10, 20, 25, 30, 35, 40, 50, 60, 70, 80, 90, 95, 98, 99, 100) {
+    @if $stop >= $tone {
+      $weight: math.div($tone - $previous, $stop - $previous) * 100%;
+      @return color.mix(map.get($brand-palette, $stop), map.get($brand-palette, $previous), $weight, $method: rgb);
+    }
+    $previous: $stop;
+  }
+  @return map.get($brand-palette, 100);
+}
+
+@function luminance($value) {
+  $result: 0;
+  @each $channel, $weight in ('red': .2126, 'green': .7152, 'blue': .0722) {
+    $component: math.div(color.channel($value, $channel, $space: rgb), 255);
+    @if $component <= .04045 {
+      $component: math.div($component, 12.92);
+    } @else {
+      $component: math.pow(math.div($component + .055, 1.055), 2.4);
+    }
+    $result: $result + $component * $weight;
+  }
+  @return $result;
+}
+
+@function contrast($first, $second) {
+  @return math.div(math.max($first, $second) + .05, math.min($first, $second) + .05);
+}
+
+@function foreground($value) {
+  @if contrast($value, 0) >= contrast($value, 1) {
+    @return #000;
+  }
+  @return #fff;
+}
+
+html {
+  height: 100%;
+  color-scheme: light;
+  @include mat.theme((
+    color: (
+      primary: $brand-palette,
+      tertiary: mat.$blue-palette,
+      theme-type: light,
+    ),
+    typography: (plain-family: (Lato, sans-serif)),
+    density: 0,
+  ));
+}
+
+html.dark-theme {
+  color-scheme: dark;
+  @include mat.theme((
+    color: (
+      primary: $brand-palette,
+      tertiary: mat.$blue-palette,
+      theme-type: dark,
+    ),
+    typography: (plain-family: (Lato, sans-serif)),
+    density: 0,
+  ));
+}
+
+// Neutral surfaces and primary accents respond independently to the same brightness level.
+@for $level from 0 through 100 {
+  $surface: color.mix(#fafafa, #121212, $level * 1%, $method: rgb);
+  $luminance: luminance($surface);
+  $primary: primary-tone(80 - .4 * $level);
+  html[data-brightness='#{$level}'] {
+    --app-palette-surface: #{$surface};
+    --app-palette-foreground: #{foreground($luminance)};
+    --app-palette-primary: #{$primary};
+    --app-palette-on-primary: #{foreground(luminance($primary))};
+  }
+}
+
+html[data-brightness] {
+  @each $role in (background, surface, surface-dim, surface-bright,
+    surface-container-lowest, surface-container-low, surface-container,
+    surface-container-high, surface-container-highest) {
+    --mat-sys-#{$role}: var(--app-palette-surface);
+  }
+  @each $role in (on-surface, on-surface-variant, on-background) {
+    --mat-sys-#{$role}: var(--app-palette-foreground);
+  }
+  @each $role in (primary, primary-container, surface-tint, outline) {
+    --mat-sys-#{$role}: var(--app-palette-primary);
+  }
+  @each $role in (on-primary, on-primary-container) {
+    --mat-sys-#{$role}: var(--app-palette-on-primary);
+  }
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+}

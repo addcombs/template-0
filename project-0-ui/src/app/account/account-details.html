@@ -1,0 +1,48 @@
+<form [formGroup]="form" (ngSubmit)="save()">
+  <h1 mat-dialog-title>Account details</h1>
+  <mat-dialog-content>
+    @if (account.state() === 'missing') {
+      <p>Complete your account details to continue.</p>
+    }
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
+      <!-- A textarea so long addresses wrap instead of being clipped. -->
+      <textarea
+        matInput
+        class="account-email"
+        cdkTextareaAutosize
+        cdkAutosizeMinRows="1"
+        rows="1"
+        [value]="auth.email()"
+        readonly
+        aria-readonly="true"
+        autocomplete="email"
+      ></textarea>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>First name</mat-label>
+      <input matInput formControlName="firstName" autocomplete="given-name" maxlength="100" required>
+      <mat-error>Enter your first name.</mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Last name</mat-label>
+      <input matInput formControlName="lastName" autocomplete="family-name" maxlength="100" required>
+      <mat-error>Enter your last name.</mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Phone number (optional)</mat-label>
+      <input matInput type="tel" formControlName="phoneNumber" autocomplete="tel" maxlength="40">
+      <mat-error>Phone number must be 40 characters or fewer.</mat-error>
+    </mat-form-field>
+    @if (account.error()) { <p class="account-error" role="alert">{{ account.error() }}</p> }
+    @if (auth.error()) { <p class="account-error" role="alert">{{ auth.error() }}</p> }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    @if (account.state() === 'ready') {
+      <button mat-button type="button" [disabled]="account.saving()" (click)="account.cancel()">Cancel</button>
+    } @else {
+      <button mat-button type="button" [disabled]="account.saving() || auth.busy()" (click)="auth.signOut()">Sign out</button>
+    }
+    <button mat-flat-button type="submit" [disabled]="account.saving() || !hasChanges()">Save</button>
+  </mat-dialog-actions>
+</form>

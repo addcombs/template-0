@@ -1,0 +1,204 @@
+@if (auth.status() === 'loading') {
+  <main class="auth-screen" aria-live="polite">
+    <p>Checking your session...</p>
+  </main>
+} @else if (auth.status() === 'notConfigured') {
+  <main class="auth-screen">
+    <h1 class="welcome-title">Welcome to {{ appName }}</h1>
+    <p>Authentication setup is required before you can sign in or create an account.</p>
+    <p>Run <code>create-cognito-pool.cmd</code>; it writes this app's Cognito settings to <code>src/app/project.settings.ts</code>.</p>
+  </main>
+} @else if (auth.status() === 'signedOut' || auth.status() === 'invalid') {
+  <main class="auth-screen">
+    @if (registrationOpen() && auth.status() === 'signedOut') {
+      @defer (when registrationOpen()) {
+        <app-registration (backToSignIn)="registrationOpen.set(false)" />
+      } @loading {
+        <p>Loading registration...</p>
+      }
+    } @else {
+    <h1 class="welcome-title">Welcome to {{ appName }}</h1>
+    <p>Sign in or create an account to continue.</p>
+    @if (auth.error()) {
+      <p class="auth-error" role="alert">{{ auth.error() }}</p>
+    }
+    @if (auth.status() === 'invalid') {
+      <button mat-flat-button type="button" [disabled]="auth.busy()" (click)="auth.signOut()">Clear session</button>
+    } @else {
+      <button mat-flat-button type="button" [disabled]="auth.busy()" (click)="auth.signIn()">Sign in</button>
+      <button mat-button type="button" [disabled]="auth.busy()" (click)="registrationOpen.set(true)">Create account</button>
+    }
+    }
+  </main>
+} @else {
+<mat-sidenav-container class="app-container">
+  <mat-sidenav
+    id="app-sidenav"
+    [mode]="isWide() ? 'side' : 'over'"
+    [autoFocus]="isWide() ? 'dialog' : 'first-heading'"
+    [opened]="sidenavOpened()"
+    (openedChange)="sidenavOpened.set($event)"
+    [fixedInViewport]="!isWide()"
+    aria-label="Primary navigation"
+  >
+    <mat-toolbar class="app-toolbar sidenav-toolbar">
+      <h2>Menu</h2>
+      <span class="spacer"></span>
+      <button mat-icon-button type="button" aria-label="Close navigation menu" (click)="sidenavOpened.set(false)">
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-toolbar>
+    <mat-nav-list>
+      <a mat-list-item href="#" (click)="sidenavOpened.set(!isWide())">
+        <mat-icon matListItemIcon>home</mat-icon>
+        <span matListItemTitle>Home</span>
+      </a>
+      @for (group of technologyGroups; track group.label; let i = $index) {
+        <a
+          mat-list-item
+          href="#"
+          [activated]="selectedTechnologyGroup() === i"
+          (click)="$event.preventDefault(); showTechnologyGroup(i)"
+        >
+          <mat-icon matListItemIcon>{{ group.icon }}</mat-icon>
+          <span matListItemTitle>{{ group.label }}</span>
+        </a>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="app-content">
+    <mat-toolbar color="primary" class="app-toolbar">
+      <app-toolbar-background />
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Toggle navigation menu"
+        aria-controls="app-sidenav"
+        [attr.aria-expanded]="sidenavOpened()"
+        (click)="toggleSidenav()"
+      >
+        <mat-icon>menu</mat-icon>
+      </button>
+      <span class="app-title">{{ appName }}</span>
+      <span class="spacer"></span>
+      <div class="brightness-control" [hidden]="!brightnessOpen()">
+          <input
+            #brightnessSlider
+            id="app-brightness"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            aria-label="Brightness"
+            aria-orientation="horizontal"
+            [value]="theme.brightness()"
+            [attr.aria-valuetext]="theme.brightness() + '% brightness'"
+            (input)="theme.setBrightness(brightnessSlider.valueAsNumber)"
+          />
+      </div>
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Adjust brightness"
+        aria-controls="app-brightness"
+        [attr.aria-expanded]="brightnessOpen()"
+        matTooltip="Adjust brightness"
+        (click)="brightnessOpen.set(!brightnessOpen())"
+      >
+        <mat-icon>{{ theme.isDark() ? 'dark_mode' : 'light_mode' }}</mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Profile"
+        matTooltip="Profile"
+        [matMenuTriggerFor]="profileMenu"
+      >
+        <mat-icon>account_circle</mat-icon>
+      </button>
+      <mat-menu #profileMenu="matMenu">
+        <div class="profile-name">{{ profileName() }}</div>
+        <button mat-menu-item type="button" [disabled]="account.state() !== 'ready'" (click)="account.open()">
+          <mat-icon>manage_accounts</mat-icon>
+          <span>Account details</span>
+        </button>
+        <button mat-menu-item type="button" [disabled]="auth.busy()" (click)="auth.signOut()">
+          <mat-icon>logout</mat-icon>
+          <span>Sign out</span>
+        </button>
+      </mat-menu>
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="More options"
+        matTooltip="More options"
+        [matMenuTriggerFor]="moreMenu"
+      >
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #moreMenu="matMenu" xPosition="before">
+        <a mat-menu-item [href]="apiDocsUrl" target="_blank" rel="noopener">
+          <mat-icon>api</mat-icon>
+          <span>API docs</span>
+        </a>
+        <button mat-menu-item type="button" (click)="openAbout()">
+          <mat-icon>info</mat-icon>
+          <span>About</span>
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+
+    <main>
+      @if (auth.error()) {
+        <p class="auth-error" role="alert">{{ auth.error() }}</p>
+      }
+      @if (account.state() === 'loading' || account.state() === 'idle') {
+        <p aria-live="polite">Loading account details...</p>
+      } @else if (account.state() === 'error') {
+        <p class="auth-error" role="alert">{{ account.error() }}</p>
+        <button mat-button type="button" (click)="account.load()">Try again</button>
+      } @else if (account.state() === 'ready') {
+        <h1 class="welcome-title">Welcome to {{ appName }}@if (account.details()?.firstName || auth.firstName()) {, {{ account.details()?.firstName || auth.firstName() }}}!</h1>
+      }
+      <mat-tab-group class="technology-tabs" mat-stretch-tabs="false" dynamicHeight aria-label="Technologies"
+        [selectedIndex]="selectedTechnologyGroup()"
+        (selectedIndexChange)="selectedTechnologyGroup.set($event)">
+        @for (group of technologyGroups; track group.label) {
+          <mat-tab [label]="group.label">
+            <section class="card-grid" [attr.aria-label]="group.label + ' technologies'">
+              @for (technology of group.technologies; track technology.name) {
+                <mat-card appearance="outlined" [style.--card-index]="$index">
+                  <mat-card-header>
+                    @if (technology.logo) {
+                      <img mat-card-avatar class="technology-logo" [src]="technology.logo" alt="" width="48" height="48" loading="lazy" />
+                    } @else {
+                      <mat-icon mat-card-avatar class="technology-icon" aria-hidden="true">{{ technology.icon }}</mat-icon>
+                    }
+                    <mat-card-title>{{ technology.name }}</mat-card-title>
+                    <mat-card-subtitle>{{ technology.description }}</mat-card-subtitle>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <p>{{ technology.usage }}</p>
+                  </mat-card-content>
+                </mat-card>
+              }
+            </section>
+          </mat-tab>
+        }
+      </mat-tab-group>
+    </main>
+    <footer class="app-footer">
+      <span class="app-credit">Developed by <span class="app-credit-name">{{ developerName }}</span></span>
+      <span>API</span>
+      <mat-icon
+        class="api-status"
+        [class.api-down]="apiStatus() === 'down'"
+        role="img"
+        [attr.aria-label]="apiStatusLabel()"
+        [matTooltip]="apiStatusLabel()"
+      >{{ apiStatus() === 'up' ? 'cloud_done' : apiStatus() === 'down' ? 'cloud_off' : 'cloud_queue' }}</mat-icon>
+    </footer>
+  </mat-sidenav-content>
+</mat-sidenav-container>
+}

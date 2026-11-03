@@ -1,0 +1,267 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  --app-bar-height: 120px;
+}
+
+.app-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  gap: 8px;
+  background-color: var(--mat-sys-surface);
+  height: var(--app-bar-height);
+  flex-shrink: 0;
+  color: var(--mat-sys-primary);
+  border-bottom: 1px solid var(--mat-sys-primary);
+}
+
+.app-content > .app-toolbar {
+  padding-block: 24px;
+}
+
+.app-toolbar button {
+  color: inherit;
+}
+
+mat-sidenav {
+  background-color: var(--mat-sys-surface-container);
+  color: var(--mat-sys-primary);
+  width: 280px;
+  border-right: 1px solid var(--mat-sys-primary);
+  border-top-right-radius: 0;
+  box-shadow: var(--mat-sys-level3);
+}
+
+mat-sidenav mat-nav-list {
+  padding: 12px;
+}
+
+.sidenav-toolbar {
+  height: 56px;
+  background-color: var(--mat-sys-secondary);
+  color: var(--mat-sys-on-secondary);
+  border-bottom: 0;
+}
+
+.sidenav-toolbar h2 {
+  margin: 0;
+  font: inherit;
+}
+
+.app-title {
+  margin-left: 8px;
+  font-size: 1.25rem;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.brightness-control {
+  display: flex;
+  align-items: center;
+  flex: 0 1 120px;
+  min-width: 48px;
+}
+
+.brightness-control[hidden] {
+  display: none;
+}
+
+.brightness-control input {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.brightness-control input:focus-visible {
+  outline: 2px solid var(--mat-sys-on-surface);
+  outline-offset: 3px;
+}
+
+.brightness-control input::-webkit-slider-runnable-track {
+  height: 6px;
+  border: 1px solid var(--mat-sys-on-surface);
+  border-radius: 999px;
+  background: linear-gradient(to right, #121212, #fafafa);
+}
+
+.brightness-control input::-moz-range-track {
+  height: 4px;
+  border: 1px solid var(--mat-sys-on-surface);
+  border-radius: 999px;
+  background: linear-gradient(to right, #121212, #fafafa);
+}
+
+.brightness-control input::-webkit-slider-thumb {
+  appearance: none;
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  margin-top: -8px;
+  border: 2px solid var(--mat-sys-on-surface);
+  border-radius: 50%;
+  background: var(--mat-sys-primary);
+  box-shadow: 0 0 0 2px var(--mat-sys-surface);
+}
+
+.brightness-control input::-moz-range-thumb {
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--mat-sys-on-surface);
+  border-radius: 50%;
+  background: var(--mat-sys-primary);
+  box-shadow: 0 0 0 2px var(--mat-sys-surface);
+}
+
+@media (forced-colors: active) {
+  .brightness-control input {
+    appearance: auto;
+  }
+}
+
+.app-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  // The drawer's rounded top corner reveals the container behind it.
+  background-image: linear-gradient(#000, #000);
+  background-size: 280px 56px;
+  background-repeat: no-repeat;
+}
+
+.app-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content main {
+  flex: 1 0 auto;
+  padding: 24px;
+}
+
+.app-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  height: 48px;
+  flex-shrink: 0;
+  padding: 0 24px;
+  border-top: 1px solid var(--mat-sys-primary);
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-primary);
+}
+
+.app-credit {
+  margin-right: auto;
+  color: var(--mat-sys-primary);
+}
+
+.app-credit-name {
+  color: var(--mat-sys-secondary);
+}
+
+.welcome-title {
+  font-weight: 400;
+}
+
+.technology-tabs {
+  margin-top: 32px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  // Bottom padding reserves room for the cards' entrance rise so they aren't clipped.
+  --card-rise: 96px;
+  padding: 24px 8px calc(12px + var(--card-rise));
+  overflow: clip;
+}
+
+.card-grid mat-card {
+  min-height: 220px;
+  --mat-card-outlined-outline-color: var(--mat-sys-primary);
+  --mat-card-outlined-container-elevation: var(--mat-sys-level2);
+  animation: card-enter 1300ms cubic-bezier(0.2, 0, 0, 1) both;
+  animation-delay: calc(var(--card-index, 0) * 200ms);
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--card-rise));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-grid mat-card {
+    animation: none;
+  }
+}
+
+.card-grid .technology-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 0;
+  object-fit: contain;
+}
+
+.card-grid .technology-icon {
+  width: 48px;
+  height: 48px;
+  font-size: 44px;
+  color: var(--mat-sys-primary);
+}
+
+.card-grid mat-card-content {
+  margin-top: 16px;
+}
+
+.card-grid mat-card-content p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+  .card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.auth-screen {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.auth-error {
+  color: var(--mat-sys-error);
+}
+
+.profile-name {
+  padding: 12px 16px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--mat-sys-primary);
+}

@@ -1,0 +1,49 @@
+@if (step() === 'register') {
+  <h1>Create an account</h1>
+  <form [formGroup]="registration" (ngSubmit)="register()">
+    <mat-form-field appearance="outline">
+      <mat-label>First name</mat-label>
+      <input matInput formControlName="firstName" autocomplete="given-name" maxlength="2048" required>
+      <mat-error>Enter your first name.</mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
+      <input matInput type="email" formControlName="email" autocomplete="email" required>
+      <mat-error>Enter a valid email address.</mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Password</mat-label>
+      <input matInput type="password" formControlName="password" autocomplete="new-password" required>
+      <mat-error>Use at least 12 characters with uppercase, lowercase, a number, and a symbol.</mat-error>
+    </mat-form-field>
+    <p class="password-hint">Use at least 12 characters with uppercase, lowercase, a number, and a symbol.</p>
+    @if (error()) { <p class="auth-error" role="alert">{{ error() }}</p> }
+    <button mat-flat-button type="submit" [disabled]="busy()">Create account</button>
+  </form>
+  <button mat-button type="button" [disabled]="busy()" (click)="showConfirmation()">Already have a verification code?</button>
+  <button mat-button type="button" [disabled]="busy()" (click)="backToSignIn.emit()">Back to sign in</button>
+} @else if (step() === 'confirm') {
+  <h1>Verify your email</h1>
+  <p>Enter the code sent to your email address.</p>
+  <form [formGroup]="confirmation" (ngSubmit)="confirm()">
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
+      <input matInput type="email" formControlName="email" autocomplete="email" required>
+      <mat-error>Enter a valid email address.</mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Verification code</mat-label>
+      <input matInput formControlName="code" autocomplete="one-time-code" required>
+      <mat-error>Enter the verification code.</mat-error>
+    </mat-form-field>
+    @if (error()) { <p class="auth-error" role="alert">{{ error() }}</p> }
+    @if (message()) { <p role="status">{{ message() }}</p> }
+    <button mat-flat-button type="submit" [disabled]="busy()">Verify account</button>
+  </form>
+  <button mat-button type="button" [disabled]="busy()" (click)="resendCode()">Resend code</button>
+  <button mat-button type="button" [disabled]="busy()" (click)="backToSignIn.emit()">Back to sign in</button>
+} @else {
+  <h1>Account verified</h1>
+  <p>You can now sign in to {{ appName }}.</p>
+  <button mat-flat-button type="button" (click)="backToSignIn.emit()">Continue to sign in</button>
+}

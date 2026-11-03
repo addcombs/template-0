@@ -1,0 +1,8 @@
+target/
+.idea/
+*.iml
+.env
+.env.*
+*.log
+lambda-env.json
+trust.json

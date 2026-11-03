@@ -1,0 +1,8 @@
+{
+  "name": "project-0",
+  "developerName": "Adam Combs",
+  "aws": { "profile": "default", "region": "us-east-2" },
+  "domain": { "apex": "acombs-dev.com", "host": "project-0.acombs-dev.com", "dnsProvider": "Squarespace" },
+  "cognito": { "domainPrefix": "project-0-acombs" },
+  "theme": { "primary": "#26A1D5", "secondary": "#26D5B2" }
+}
