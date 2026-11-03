@@ -41,6 +41,8 @@ describe('AuthService', () => {
     mocks.signOut.mockResolvedValue(undefined);
   });
 
+  afterEach(() => window.history.replaceState({}, '', '/'));
+
   it('starts signed out when there is no session', async () => {
     const service = new AuthService();
     await vi.waitFor(() => expect(service.status()).toBe('signedOut'));
@@ -121,6 +123,37 @@ describe('AuthService', () => {
     await service.signIn();
     expect(service.error()).toContain('Could not start sign-in');
     expect(service.busy()).toBe(false);
+    vi.restoreAllMocks();
+  });
+
+  it('waits for the code exchange when returning from Cognito, keeping the nonce', async () => {
+    window.history.replaceState({}, '', '/?code=abc&state=xyz');
+    window.sessionStorage.setItem('template-0.auth.nonce', 'expected');
+    const service = new AuthService();
+    await vi.waitFor(() => expect(mocks.fetchAuthSession).toHaveBeenCalledOnce());
+    await Promise.resolve();
+    expect(service.status()).toBe('loading');
+    expect(window.sessionStorage.getItem('template-0.auth.nonce')).toBe('expected');
+
+    mocks.fetchAuthSession.mockResolvedValue({
+      tokens: { idToken: { payload: { email: 'user@example.com', nonce: 'expected' } } },
+    });
+    const listener = mocks.listen.mock.calls[0][1];
+    listener({ payload: { event: 'signInWithRedirect' } });
+    await vi.waitFor(() => expect(service.status()).toBe('signedIn'));
+    expect(service.email()).toBe('user@example.com');
+    expect(window.sessionStorage.getItem('template-0.auth.nonce')).toBeNull();
+  });
+
+  it('stops waiting when the code exchange fails', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    window.history.replaceState({}, '', '/?code=abc&state=xyz');
+    const service = new AuthService();
+    await vi.waitFor(() => expect(mocks.fetchAuthSession).toHaveBeenCalledOnce());
+    const listener = mocks.listen.mock.calls[0][1];
+    listener({ payload: { event: 'signInWithRedirect_failure', data: { error: 'failed' } } });
+    expect(service.status()).toBe('signedOut');
+    expect(service.error()).toContain('Sign-in failed');
     vi.restoreAllMocks();
   });
 

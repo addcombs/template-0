@@ -16,10 +16,20 @@ export class AuthService {
   readonly firstName = signal('');
   readonly error = signal('');
   readonly busy = signal(false);
+  /**
+   * True on the return from Cognito's sign-in page (`?code=...`). Amplify exchanges the code for
+   * tokens in the background, so a session check can run before they exist; until the
+   * signInWithRedirect event fires, an empty session means "not yet", not "signed out".
+   */
+  private awaitingRedirect = new URLSearchParams(window.location.search).has('code');
 
   constructor() {
     Hub.listen('auth', ({ payload }) => {
-      if (payload.event === 'signInWithRedirect_failure') {
+      if (payload.event === 'signInWithRedirect') {
+        this.awaitingRedirect = false;
+        void this.restoreSession();
+      } else if (payload.event === 'signInWithRedirect_failure') {
+        this.awaitingRedirect = false;
         console.error('Cognito sign-in failed', payload.data);
         this.error.set('Sign-in failed. Please try again.');
         this.status.set('signedOut');
@@ -90,6 +100,8 @@ export class AuthService {
     try {
       const session = await fetchAuthSession();
       if (!session.tokens) {
+        // Keep the nonce and the loading state; the signInWithRedirect event checks again.
+        if (this.awaitingRedirect) return;
         window.sessionStorage.removeItem(NONCE_KEY);
         this.status.set('signedOut');
         return;
