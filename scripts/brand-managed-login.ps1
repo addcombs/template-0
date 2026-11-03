@@ -1,5 +1,5 @@
 # Applies the app's colours from config\managed-login-branding.json to its Cognito managed-login
-# style (for project-0: primary #00668a/#7bd0ff, secondary #006b58/#37debb, app-like neutral
+# style (for template-0: primary #00668a/#7bd0ff, secondary #006b58/#37debb, app-like neutral
 # backgrounds, light/dark following the visitor's system setting). Run switch-managed-login.cmd first.
 # Log: logs\managed-login.log (appended)
 . "$PSScriptRoot\common.ps1" -LogName 'managed-login.log' -AppendLog

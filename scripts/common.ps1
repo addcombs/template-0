@@ -23,12 +23,15 @@ $awsRegion   = $project.aws.region
 $domain      = $project.domain.host
 $apex        = $project.domain.apex
 $subdomain   = $domain -replace "\.$([regex]::Escape($apex))$", ''
-# The API has its own CloudFront distribution at api.<host>, e.g. api.project-0.acombs-dev.com.
+# The API has its own CloudFront distribution at api.<host>, e.g. api.template-0.acombs-dev.com.
 $apiDomain    = "api.$domain"
 $apiSubdomain = "api.$subdomain"
 # ACM certificates used by CloudFront must be in us-east-1, whatever the app's region.
 $cloudFrontRegion = 'us-east-1'
-# The API's Java package: com.acombsdev.<app name in lower-case letters and digits>, e.g. com.acombsdev.project0.
+# The app's schema in the shared database: project.json database.schema, or else the app name in
+# lower case with other characters as underscores (project-1 -> project_1).
+$dbSchema = if ($project.database.schema) { $project.database.schema } else { ($app -replace '[^A-Za-z0-9]', '_').ToLowerInvariant() }
+# The API's Java package: com.acombsdev.<app name in lower-case letters and digits>, e.g. com.acombsdev.template0.
 $javaPackage = 'com.acombsdev.' + ($app -replace '[^A-Za-z0-9]', '').ToLowerInvariant()
 $apiDir = Join-Path $root "$app-api"
 $uiDir  = Join-Path $root "$app-ui"

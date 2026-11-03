@@ -73,5 +73,5 @@ $result = [ordered]@{
 Write-Json $cognitoStateFile $result | Out-Null
 Step "issuer: $($result.issuer)"
 Step "domain: $($result.domain)"
-Step 'DONE. IDs saved to state\cognito-pool.json (the API .env needs COGNITO_ISSUER and COGNITO_CLIENT_ID from it)'
+Step 'DONE. IDs saved to state\cognito-pool.json (deploy-api and start-all pass them to the API)'
 Read-Host 'Press Enter to close'
