@@ -106,8 +106,9 @@ describe('App', () => {
         'Material Icons & Lato', 'Vitest', 'Angular CLI', 'Node.js & npm'],
       ['Java', 'Spring Boot', 'Spring Security', 'Spring Data JPA', 'Bean Validation', 'Spring Boot Actuator', 'Swagger UI',
         'JUnit & Mockito', 'Maven', 'Spring Boot DevTools', 'PostgreSQL', 'SQL migrations'],
-      ['AWS Amplify', 'Amazon Cognito', 'Neon'],
-      ['Claude', 'PowerShell & batch scripts'],
+      ['AWS Amplify', 'Amazon Cognito', 'Neon', 'AWS Lambda', 'Amazon CloudFront', 'Amazon S3', 'AWS Certificate Manager',
+        'Amazon CloudWatch Logs'],
+      ['Claude', 'PowerShell & batch scripts', 'AWS CLI'],
     ];
     const visibleCards = (label: string): HTMLElement[] => Array.from(
       fixture.nativeElement.querySelectorAll(`section.card-grid[aria-label="${label} technologies"] mat-card`),

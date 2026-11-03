@@ -105,7 +105,7 @@ export class App {
         { name: 'Maven', logo: 'logos/maven.svg', description: 'Back-end build and dependency management', usage: 'Downloads Java dependencies and builds and tests the Spring Boot API.' },
         { name: 'Spring Boot DevTools', logo: 'logos/spring.svg', description: 'Development-time restarts', usage: 'Restarts the API automatically when code changes during development; it is excluded from production builds.' },
         { name: 'PostgreSQL', logo: 'logos/postgresql.svg', description: 'Account data storage', usage: 'Stores account records so profile changes remain available across sessions.' },
-        { name: 'SQL migrations', logo: 'logos/postgresql.svg', description: 'Versioned database schema scripts', usage: 'Scripts in db/migrations add the Cognito subject and unique email constraints that the account API expects.' },
+        { name: 'SQL migrations', logo: 'logos/postgresql.svg', description: 'Versioned database schema scripts', usage: 'Scripts in db/migrations create the app\'s schema and users table, with the unique Cognito subject and email constraints the account API expects; apply-migrations.cmd runs them.' },
       ],
     },
     {
@@ -114,7 +114,12 @@ export class App {
       technologies: [
         { name: 'AWS Amplify', logo: 'logos/aws-amplify.svg', description: 'Cognito client library for the browser', usage: 'Connects the browser to Cognito for sign-in, sign-out, and retrieving the session token.' },
         { name: 'Amazon Cognito', logo: 'logos/amazon-cognito.svg', description: 'Sign-in and registration', usage: 'Manages user accounts and hosted sign-in; its identity tokens authorize account API requests.' },
-        { name: 'Neon', logo: 'logos/neon.svg', description: 'Hosted serverless PostgreSQL', usage: 'Hosts the PostgreSQL database used by the backend without a locally managed database server.' },
+        { name: 'Neon', logo: 'logos/neon.svg', description: 'Hosted serverless PostgreSQL', usage: 'Hosts the PostgreSQL database shared by these apps without a locally managed database server; each app keeps its tables in its own schema.' },
+        { name: 'AWS Lambda', icon: 'bolt', description: 'Serverless API hosting', usage: 'Runs the Spring Boot API on Java 21 (arm64) through aws-serverless-java-container, with SnapStart to cut cold starts and a live alias behind a function URL.' },
+        { name: 'Amazon CloudFront', icon: 'public', description: 'Content delivery and HTTPS', usage: 'Serves the UI at the app domain and the API at its api subdomain over HTTPS, caching the UI files and passing API requests straight to Lambda.' },
+        { name: 'Amazon S3', icon: 'storage', description: 'Object storage', usage: 'Holds the built UI files in a private bucket that only CloudFront can read, and stages the API package for Lambda deployments.' },
+        { name: 'AWS Certificate Manager', icon: 'verified_user', description: 'Free TLS certificates', usage: 'Issues and auto-renews the certificates for the app and API domains, validated through DNS records at the domain\'s DNS provider.' },
+        { name: 'Amazon CloudWatch Logs', icon: 'receipt_long', description: 'API logging', usage: 'Collects the Lambda function\'s log output; api-logs.cmd shows recent API logs for troubleshooting.' },
       ],
     },
     {
@@ -122,7 +127,8 @@ export class App {
       icon: 'build',
       technologies: [
         { name: 'Claude', icon: 'smart_toy', description: 'AI coding agent by Anthropic', usage: 'Generated this application from the angular-app and spring-boot-app agents and templates provided by Adam Combs.' },
-        { name: 'PowerShell & batch scripts', icon: 'terminal', description: 'One-click local setup, tests, and start-up', usage: 'start-all.cmd installs dependencies, builds and tests both apps, then starts the API and UI; test-all.cmd reruns the UI tests and API build without starting servers.' },
+        { name: 'PowerShell & batch scripts', icon: 'terminal', description: 'One-click setup, tests, start-up, and deployment', usage: 'start-all.cmd installs dependencies, builds and tests both apps, then starts the API and UI; test-all.cmd reruns the UI tests and API build; the create-*, deploy-api, and deploy-ui scripts set up and deploy to AWS from project.json.' },
+        { name: 'AWS CLI', icon: 'keyboard', description: 'Command-line access to AWS', usage: 'Runs every AWS step in the setup and deploy scripts, from creating the Cognito pool and certificates to uploading the UI and publishing new Lambda versions.' },
       ],
     },
   ];
