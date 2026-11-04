@@ -140,7 +140,7 @@ if (-not $NoGit) {
 
 Step "DONE. Next, from $Destination in PowerShell (see README.md, Create a new app):"
 Step '  1. scripts\create-cognito-pool.ps1    2. scripts\apply-migrations.ps1    3. scripts\start-all.ps1'
-Step '  4. scripts\brand-managed-login.ps1    5. scripts\deploy-api.ps1, scripts\create-function-url.ps1'
+Step '  4. scripts\brand-managed-login.ps1    5. scripts\build-lambda.ps1, deploy-api.ps1, create-function-url.ps1'
 Step "  6. scripts\request-certificate.ps1 (add its CNAMEs at $($project.domain.dnsProvider))"
 Step '  7. scripts\create-ui-bucket.ps1, create-cloudfront.ps1, create-api-cloudfront.ps1, deploy-ui.ps1'
 Step "  8. at $($project.domain.dnsProvider): CNAMEs for $HostName and api.$HostName to the CloudFront domains"
