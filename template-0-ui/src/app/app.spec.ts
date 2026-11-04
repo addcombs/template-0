@@ -102,7 +102,7 @@ describe('App', () => {
     const tabs: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('[role="tab"]'));
     expect(tabs.map((tab) => tab.textContent?.trim())).toEqual(['Front-end', 'Back-end', 'Cloud', 'Tools']);
     const expected = [
-      ['Angular', 'Angular Material', 'Angular CDK', 'Angular Reactive Forms', 'TypeScript', 'RxJS', 'Sass', 'SVG',
+      ['Angular', 'Angular Material', 'Angular CDK', 'Angular Reactive Forms', 'Angular Signals', 'TypeScript', 'RxJS', 'Sass', 'SVG',
         'Material Icons & Lato', 'Vitest', 'Angular CLI', 'Node.js & npm'],
       ['Java', 'Spring Boot', 'Spring Security', 'Spring Data JPA', 'Bean Validation', 'Spring Boot Actuator', 'Swagger UI',
         'JUnit & Mockito', 'Maven', 'Spring Boot DevTools', 'PostgreSQL', 'SQL migrations'],
