@@ -3,9 +3,12 @@
 #    attributes email (required) + given_name, recovery by verified email
 #  - public app client `<app>-ui` (no secret): authorization-code flow, scopes openid/email/profile,
 #    callback + sign-out URLs http://localhost:4200/ and https://<domain>/
-#  - hosted sign-in domain <cognito.domainPrefix>.auth.<region>.amazoncognito.com (classic hosted UI;
-#    scripts\switch-managed-login.ps1 moves it to managed login)
-# Safe to re-run: reuses the pool, client and domain if they exist.
+#  - sign-in domain <cognito.domainPrefix>.auth.<region>.amazoncognito.com with managed login
+#    (version 2; a domain still on the classic hosted UI is switched, keeping its address)
+#  - a managed-login style for the app client (Cognito's default if it has none); the current
+#    style is saved in full to logs\managed-login-branding.json (no secrets) as a starting point for
+#    config\managed-login-branding.json; scripts\brand-managed-login.ps1 then applies the app's colours
+# Safe to re-run: reuses the pool, client, domain and style if they exist.
 # Writes the IDs to state\cognito-pool.json. Log: logs\cognito-pool.log
 . "$PSScriptRoot\common.ps1" -LogName 'cognito-pool.log' -Title 'Cognito pool'
 $poolName = $names.UserPool
@@ -56,13 +59,29 @@ if (-not $clientId -or $clientId -eq 'None') {
   Step "app client created: $clientId"
 } else { Step "app client exists: $clientId" }
 
-# --- hosted sign-in domain ---
+# --- sign-in domain (managed login) ---
 $signInDomain = Invoke-AwsCli @('cognito-idp','describe-user-pool','--user-pool-id',$poolId,'--query','UserPool.Domain','--output','text')
 if (-not $signInDomain -or $signInDomain -eq 'None') {
-  Invoke-AwsCli @('cognito-idp','create-user-pool-domain','--user-pool-id',$poolId,'--domain',$domainPrefix,'--managed-login-version','1') | Out-Null
+  Invoke-AwsCli @('cognito-idp','create-user-pool-domain','--user-pool-id',$poolId,'--domain',$domainPrefix,'--managed-login-version','2') | Out-Null
   $signInDomain = $domainPrefix
-  Step "sign-in domain created: $domainPrefix"
-} else { Step "sign-in domain exists: $signInDomain" }
+  Step "sign-in domain created with managed login: $domainPrefix"
+} else {
+  $version = Invoke-AwsCli @('cognito-idp','describe-user-pool-domain','--domain',$signInDomain,'--query','DomainDescription.ManagedLoginVersion','--output','text')
+  if ($version -ne '2') {
+    Invoke-AwsCli @('cognito-idp','update-user-pool-domain','--domain',$signInDomain,'--user-pool-id',$poolId,'--managed-login-version','2') | Out-Null
+    Step "sign-in domain switched to managed login (was version $version): $signInDomain"
+  } else { Step "sign-in domain exists with managed login: $signInDomain" }
+}
+
+# --- managed-login style for the app client ---
+$brandingId = Invoke-AwsCli @('cognito-idp','describe-managed-login-branding-by-client','--user-pool-id',$poolId,'--client-id',$clientId,'--query','ManagedLoginBranding.ManagedLoginBrandingId','--output','text') -AllowFail
+if (-not $brandingId -or $brandingId -eq 'None') {
+  $brandingId = Invoke-AwsCli @('cognito-idp','create-managed-login-branding','--user-pool-id',$poolId,'--client-id',$clientId,'--use-cognito-provided-values','--query','ManagedLoginBranding.ManagedLoginBrandingId','--output','text')
+  Step "default managed-login style created: $brandingId"
+} else { Step "managed-login style exists: $brandingId" }
+$style = Invoke-AwsCli @('cognito-idp','describe-managed-login-branding','--user-pool-id',$poolId,'--managed-login-branding-id',$brandingId,'--return-merged-resources','--query','ManagedLoginBranding.Settings','--output','json') -Quiet
+Write-Utf8 (Join-Path $logs 'managed-login-branding.json') $style
+Step 'style saved: logs\managed-login-branding.json'
 
 $result = [ordered]@{
   userPoolId = $poolId
