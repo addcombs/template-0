@@ -69,6 +69,17 @@ function Invoke-AwsCli([string[]]$argv, [string]$Region = $awsRegion, [switch]$A
 function Write-Utf8($path, $text) { [System.IO.File]::WriteAllText($path, $text, $utf8) }
 function Write-Json($path, $obj) { Write-Utf8 $path ($obj | ConvertTo-Json -Depth 20); return $path }
 
+# Runs the npm that ships with the Node.js on PATH (its node_modules\npm\bin\npm-cli.js). Node's
+# npm.cmd hands over to a globally installed npm when there is one (e.g. an old one in %APPDATA%\npm),
+# which can fail on lock files written by a newer npm. Pass npm's arguments as an array, e.g.
+# Invoke-Npm @('test', '--', '--watch=false'): PowerShell drops a literal -- typed after a function.
+$nodeExe = (Get-Command node.exe -ErrorAction SilentlyContinue).Source
+$npmCli = if ($nodeExe) { Join-Path (Split-Path -Parent $nodeExe) 'node_modules\npm\bin\npm-cli.js' }
+if ($npmCli -and -not (Test-Path $npmCli)) { $npmCli = $null }
+function Invoke-Npm { if ($npmCli) { & $nodeExe $npmCli @args } else { & npm.cmd @args } }
+# The same, as a command line for a new PowerShell window.
+$npmCommand = if ($npmCli) { "& '$nodeExe' '$npmCli'" } else { '& npm.cmd' }
+
 $cognitoStateFile = Join-Path $state 'cognito-pool.json'
 function Get-CognitoIds {
   if (-not (Test-Path $cognitoStateFile)) { Fail "state\cognito-pool.json not found. Run scripts\create-cognito-pool.ps1 first." }

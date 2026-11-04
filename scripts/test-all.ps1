@@ -12,7 +12,7 @@ function Run-Logged($dir, $logName, $exe, [string[]]$argv) {
 }
 
 Step 'running the UI tests...'
-$ui = Run-Logged $uiDir 'test-ui.log' 'npm.cmd' @('test', '--', '--watch=false')
+$ui = Run-Logged $uiDir 'test-ui.log' 'Invoke-Npm' @('test', '--', '--watch=false')
 Step "UI tests exit code $ui"
 Step 'running the API verify build...'
 $api = Run-Logged $apiDir 'test-api.log' 'mvn.cmd' @('--batch-mode', '--no-transfer-progress', 'verify')

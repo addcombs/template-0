@@ -15,7 +15,7 @@ Step "bucket: $bucket, distribution: $distId"
 Sync-UiConfig
 Step 'building the UI (production)...'
 Push-Location $uiDir
-& npm.cmd run build *>&1 | Tee-Object -FilePath (Join-Path $logs 'deploy-ui-build.log') | Out-Host
+Invoke-Npm @('run', 'build') *>&1 | Tee-Object -FilePath (Join-Path $logs 'deploy-ui-build.log') | Out-Host
 $code = $LASTEXITCODE
 Pop-Location
 if ($code -ne 0) { Fail "npm run build (exit $code); see logs\deploy-ui-build.log" }

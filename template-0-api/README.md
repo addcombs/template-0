@@ -1,6 +1,6 @@
 # template-0 API
 
-Spring Boot account API for template-0 (UI: `../template-0-ui`), backed by the `users` table in the app's own schema of a shared PostgreSQL database (`DATABASE_SCHEMA`; `admin` for template-0). Hibernate validates the table at startup and does not create or modify database objects; `..\scripts\apply-migrations.ps1` does.
+Spring Boot account API for template-0 (UI: `../template-0-ui`), backed by the `users` table in the app's own schema of a shared PostgreSQL database (`DATABASE_SCHEMA`; `template_0` for template-0). Hibernate validates the table at startup and does not create or modify database objects; `..\scripts\apply-migrations.ps1` does.
 
 All application endpoints are under `/api/account` and require a verified Cognito ID token. The health check and API documentation endpoints are public.
 

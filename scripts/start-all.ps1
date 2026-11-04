@@ -35,13 +35,14 @@ try {
   }
   if (-not $mvn) { throw 'Maven not found (PATH, IntelliJ bundle or ~/.m2/wrapper). Install Maven 3.9+.' }
   Step "maven: $mvn"
-  $npm = (Get-Command npm.cmd -ErrorAction SilentlyContinue).Source
-  if (-not $npm) { throw 'Node.js/npm not found on PATH. Install Node.js 22 LTS.' }
-  Step "node: $(& node -v)"
+  $npm = 'Invoke-Npm'
+  if (-not $nodeExe) { throw 'Node.js/npm not found on PATH. Install Node.js 22 LTS.' }
+  Step "node: $(& node -v), npm $(Invoke-Npm @('-v'))"
   # --- UI setup ---
   if (-not (Test-Path (Join-Path $ui 'node_modules\.bin\ng.cmd'))) { Run 'ui-npm-ci' $ui $npm @('ci','--no-audit','--no-fund') }
   $theme = Join-Path $ui 'src\app\theme\generated_theme-colors.scss'
-  if (-not (Select-String -Path $theme -Pattern $primary -SimpleMatch -Quiet)) {
+  # Regenerated when either colour in project.json differs from the ones the palettes came from.
+  if (-not (Select-String -Path $theme -Pattern "generated from primary: $primary, secondary: $secondary" -SimpleMatch -Quiet)) {
     # The schematic writes <directory>_theme-colors.scss, i.e. src/app/theme/_generated_theme-colors.scss.
     Run 'ui-theme' $ui (Join-Path $ui 'node_modules\.bin\ng.cmd') @('generate','@angular/material:theme-color',"--primary-color=$primary","--secondary-color=$secondary",'--directory=src/app/theme/_generated','--is-scss','--interactive=false')
     $gen = Join-Path $ui 'src\app\theme\_generated_theme-colors.scss'
@@ -60,7 +61,7 @@ try {
   # The API reads its schema and user pool from here and its database login from .env.
   $ids = Get-CognitoIds
   $apiCmd = "`$env:JAVA_HOME='$env:JAVA_HOME'; `$env:Path='$env:Path'; `$env:DATABASE_SCHEMA='$dbSchema'; `$env:COGNITO_ISSUER='$($ids.issuer)'; `$env:COGNITO_CLIENT_ID='$($ids.userPoolClientId)'; Set-Location '$api'; & '$mvn' spring-boot:run *>&1 | Tee-Object '$logs\api-run.log'"
-  $uiCmd  = "Set-Location '$ui'; & '$npm' start *>&1 | Tee-Object '$logs\ui-run.log'"
+  $uiCmd  = "Set-Location '$ui'; $npmCommand start *>&1 | Tee-Object '$logs\ui-run.log'"
   Start-Process powershell -ArgumentList '-NoExit','-NoProfile','-Command',$apiCmd -WindowStyle Normal
   Start-Process powershell -ArgumentList '-NoExit','-NoProfile','-Command',$uiCmd -WindowStyle Normal
   Step 'STARTED api (http://localhost:8080) and ui (http://localhost:4200)'

@@ -21,7 +21,7 @@
     ]
   },
   "private": true,
-  "packageManager": "npm@9.5.1",
+  "packageManager": "npm@11.6.1",
   "dependencies": {
     "@angular/cdk": "^21.2.14",
     "@angular/common": "^21.0.0",
