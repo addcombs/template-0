@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
 import { Injectable, inject, signal } from '@angular/core';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { firstValueFrom } from 'rxjs';
-import { apiUrl } from '../api-url';
+import { apiUrl } from '../../api-url';
 
 export interface AccountDetails {
   email: string;

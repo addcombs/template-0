@@ -5,10 +5,10 @@ import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { MatDialog, MatDialogState } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { App } from './app';
-import { AuthService } from './auth/auth.service';
+import { AuthService } from '../auth/auth.service';
 import { AccountService, AccountDetails } from './account/account.service';
 import { ApiStatusService } from './api-status/api-status.service';
-import { BRIGHTNESS_STORAGE_KEY } from './theme/theme.service';
+import { BRIGHTNESS_STORAGE_KEY } from '../theme/theme.service';
 
 describe('App', () => {
   const auth = {

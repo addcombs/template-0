@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { APP_NAME } from '../app-name';
+import { APP_NAME } from '../main/app-name';
 
 export const BRIGHTNESS_STORAGE_KEY = `${APP_NAME}.brightness`;
 

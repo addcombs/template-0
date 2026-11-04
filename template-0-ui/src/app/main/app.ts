@@ -12,16 +12,16 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { map } from 'rxjs';
-import { ThemeService } from './theme/theme.service';
-import { AuthService } from './auth/auth.service';
-import { RegistrationComponent } from './auth/registration.component';
+import { ThemeService } from '../theme/theme.service';
+import { AuthService } from '../auth/auth.service';
+import { RegistrationComponent } from '../auth/registration.component';
 import { AccountService } from './account/account.service';
 import { AccountDetailsComponent } from './account/account-details.component';
 import { ApiStatusService } from './api-status/api-status.service';
-import { apiUrl } from './api-url';
+import { apiUrl } from '../api-url';
 import { APP_DISPLAY_NAME, DEVELOPER_NAME } from './app-name';
 import { AboutDialogComponent } from './about/about-dialog.component';
-import { ToolbarBackgroundComponent } from './theme/toolbar-background.component';
+import { ToolbarBackgroundComponent } from '../theme/toolbar-background.component';
 
 /** A dashboard card: shows `logo` (a local SVG in public/logos) or, when no licensed logo is bundled, a Material `icon`. */
 export interface Technology {

@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { confirmSignUp, resendSignUpCode, signUp } from 'aws-amplify/auth';
-import { APP_NAME } from '../app-name';
+import { APP_NAME } from '../main/app-name';
 
 type RegistrationStep = 'register' | 'confirm' | 'complete';
 

@@ -3,7 +3,7 @@ import { Amplify } from 'aws-amplify';
 import { fetchAuthSession, signInWithRedirect, signOut } from 'aws-amplify/auth';
 import { cognitoUserPoolsTokenProvider } from 'aws-amplify/auth/cognito';
 import { Hub, sessionStorage } from 'aws-amplify/utils';
-import { APP_NAME } from '../app-name';
+import { APP_NAME } from '../main/app-name';
 import { AUTH_CONFIG, isAuthConfigured } from './auth.config';
 
 type AuthStatus = 'loading' | 'notConfigured' | 'signedOut' | 'signedIn' | 'invalid';

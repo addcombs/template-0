@@ -1,4 +1,4 @@
-import { PROJECT_SETTINGS } from './project.settings';
+import { PROJECT_SETTINGS } from '../project.settings';
 
 /** The application's configured name (also the package and project slug), from project.json. */
 export const APP_NAME = PROJECT_SETTINGS.appName;
