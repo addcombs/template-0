@@ -36,5 +36,5 @@ foreach ($cert in @(@{ Domain = $domain; Token = $names.CertToken }, @{ Domain =
   Step "  Points to: $target"
 }
 if ($allIssued) { Step 'DONE. Both certificates are ISSUED and ready for CloudFront.' }
-else { Step 'DONE. After adding the records, run request-certificate.cmd again in a few minutes to see ISSUED.' }
+else { Step 'DONE. After adding the records, run scripts\request-certificate.ps1 again in a few minutes to see ISSUED.' }
 Read-Host 'Press Enter to close'

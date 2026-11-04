@@ -9,7 +9,7 @@ $dist = Join-Path $uiDir "dist\$ngProject\browser"
 $account = Invoke-AwsCli @('sts','get-caller-identity','--query','Account','--output','text')
 $bucket = UiBucket $account
 $distId = Invoke-AwsCli @('cloudfront','list-distributions','--query',"DistributionList.Items[?Aliases.Items && contains(Aliases.Items, '$domain')].Id | [0]",'--output','text')
-if (-not $distId -or $distId -eq 'None') { Fail "No CloudFront distribution for $domain. Run create-cloudfront.cmd first." }
+if (-not $distId -or $distId -eq 'None') { Fail "No CloudFront distribution for $domain. Run scripts\create-cloudfront.ps1 first." }
 Step "bucket: $bucket, distribution: $distId"
 
 Sync-UiConfig

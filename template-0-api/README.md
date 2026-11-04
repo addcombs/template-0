@@ -1,6 +1,6 @@
 # template-0 API
 
-Spring Boot account API for template-0 (UI: `../template-0-ui`), backed by the `users` table in the app's own schema of a shared PostgreSQL database (`DATABASE_SCHEMA`; `admin` for template-0). Hibernate validates the table at startup and does not create or modify database objects; `..\apply-migrations.cmd` does.
+Spring Boot account API for template-0 (UI: `../template-0-ui`), backed by the `users` table in the app's own schema of a shared PostgreSQL database (`DATABASE_SCHEMA`; `admin` for template-0). Hibernate validates the table at startup and does not create or modify database objects; `..\scripts\apply-migrations.ps1` does.
 
 All application endpoints are under `/api/account` and require a verified Cognito ID token. The health check and API documentation endpoints are public.
 
@@ -12,7 +12,7 @@ All application endpoints are under `/api/account` and require a verified Cognit
 
 ## Database migrations
 
-Each app has its own schema in the shared database: `database.schema` in `..\project.json`, or else the app name in lower case with other characters as underscores (`project-1` → `project_1`). Run `..\apply-migrations.cmd` to create the schema and apply `db\migrations\*.sql` to it, in file-name order, each in its own transaction (`${schema}` in a file is replaced with the schema name). It reads the connection from `.env`. Every file is applied on every run, so migrations must be idempotent (`IF NOT EXISTS`). Run `..\apply-migrations.cmd -DryRun` to apply them and roll back.
+Each app has its own schema in the shared database: `database.schema` in `..\project.json`, or else the app name in lower case with other characters as underscores (`project-1` → `project_1`). Run `..\scripts\apply-migrations.ps1` to create the schema and apply `db\migrations\*.sql` to it, in file-name order, each in its own transaction (`${schema}` in a file is replaced with the schema name). It reads the connection from `.env`. Every file is applied on every run, so migrations must be idempotent (`IF NOT EXISTS`). Run `..\scripts\apply-migrations.ps1 -DryRun` to apply them and roll back.
 
 `001-account-identity.sql` creates the `users` table, or for an existing table adds the Cognito subject and a case-insensitive unique email index; it fails if an existing table has duplicate emails. Before running it against existing data, back it up and resolve any duplicates found by:
 
@@ -25,7 +25,7 @@ Nothing is applied automatically: the application cannot start against an out-of
 
 ## Configuration
 
-All settings are supplied through environment variables; nothing is stored in source. All six are required to start the application. `..\start-all.cmd` and `deploy-api` set `DATABASE_SCHEMA` from `..\project.json` and the Cognito settings from `..\state\cognito-pool.json`; the database login comes from `.env` (for runs outside those scripts, e.g. from the IDE, put all six in `.env`).
+All settings are supplied through environment variables; nothing is stored in source. All six are required to start the application. `..\scripts\start-all.ps1` and `deploy-api` set `DATABASE_SCHEMA` from `..\project.json` and the Cognito settings from `..\state\cognito-pool.json`; the database login comes from `.env` (for runs outside those scripts, e.g. from the IDE, put all six in `.env`).
 
 | Variable | Purpose |
 |---|---|

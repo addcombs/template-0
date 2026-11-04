@@ -108,7 +108,7 @@ describe('App', () => {
         'JUnit & Mockito', 'Maven', 'Spring Boot DevTools', 'PostgreSQL', 'SQL migrations'],
       ['AWS Amplify', 'Amazon Cognito', 'Neon', 'AWS Lambda', 'Amazon CloudFront', 'Amazon S3', 'AWS Certificate Manager',
         'Amazon CloudWatch Logs'],
-      ['Claude', 'PowerShell & batch scripts', 'AWS CLI'],
+      ['Claude', 'PowerShell scripts', 'AWS CLI'],
     ];
     const visibleCards = (label: string): HTMLElement[] => Array.from(
       fixture.nativeElement.querySelectorAll(`section.card-grid[aria-label="${label} technologies"] mat-card`),
@@ -140,7 +140,7 @@ describe('App', () => {
     const tools = visibleCards('Tools');
     expect(tools[0].querySelector('mat-icon.technology-icon')?.textContent?.trim()).toBe('smart_toy');
     expect(tools[0].querySelector('mat-card-content')?.textContent).toContain('agents and templates provided by Adam Combs');
-    expect(tools[1].querySelector('mat-card-content')?.textContent).toContain('start-all.cmd');
+    expect(tools[1].querySelector('mat-card-content')?.textContent).toContain('scripts/start-all.ps1');
     tabs[2].click();
     fixture.detectChanges();
     await fixture.whenStable();
@@ -268,7 +268,7 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Authentication setup is required');
-    expect(fixture.nativeElement.textContent).toContain('create-cognito-pool.cmd');
+    expect(fixture.nativeElement.textContent).toContain('scripts/create-cognito-pool.ps1');
     expect(fixture.nativeElement.querySelector('mat-sidenav-container')).toBeNull();
   });
 

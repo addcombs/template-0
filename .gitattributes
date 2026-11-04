@@ -1,4 +1,2 @@
-# Normalize text files to LF in the repository; batch files keep CRLF, which cmd.exe needs.
+# Normalize text files to LF in the repository.
 * text=auto
-*.cmd text eol=crlf
-*.bat text eol=crlf

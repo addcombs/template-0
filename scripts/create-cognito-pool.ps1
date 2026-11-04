@@ -4,7 +4,7 @@
 #  - public app client `<app>-ui` (no secret): authorization-code flow, scopes openid/email/profile,
 #    callback + sign-out URLs http://localhost:4200/ and https://<domain>/
 #  - hosted sign-in domain <cognito.domainPrefix>.auth.<region>.amazoncognito.com (classic hosted UI;
-#    switch-managed-login.cmd moves it to managed login)
+#    scripts\switch-managed-login.ps1 moves it to managed login)
 # Safe to re-run: reuses the pool, client and domain if they exist.
 # Writes the IDs to state\cognito-pool.json. Log: logs\cognito-pool.log
 . "$PSScriptRoot\common.ps1" -LogName 'cognito-pool.log' -Title 'Cognito pool'

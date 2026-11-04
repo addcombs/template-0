@@ -13,7 +13,7 @@ $zip = Get-ChildItem (Join-Path $apiDir 'target\*-lambda.zip') -ErrorAction Sile
 
 Set-Location $apiDir
 if (-not (Get-Command aws -ErrorAction SilentlyContinue)) { Fail 'AWS CLI not found on PATH.' }
-if (-not $zip) { Fail "Lambda zip not found. Run build-lambda.cmd first." }
+if (-not $zip) { Fail "Lambda zip not found. Run scripts\build-lambda.ps1 first." }
 $zip = $zip.FullName
 
 # --- account ---
@@ -111,5 +111,5 @@ if (-not $alias) {
   $alias = Invoke-AwsCli @('lambda','update-alias','--function-name',$function,'--name','live','--function-version',$version,'--query','AliasArn','--output','text')
 }
 Step "alias live -> version ${version}: $alias"
-Step 'DONE. On a first deploy, next run create-function-url.cmd (step 3).'
+Step 'DONE. On a first deploy, next run scripts\create-function-url.ps1 (step 3).'
 Read-Host 'Press Enter to close'

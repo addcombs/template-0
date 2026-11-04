@@ -2,7 +2,7 @@
 // database: each ${schema} in a file is replaced with the schema name, and each file runs in its own
 // transaction. Every file is applied on every run, so migrations must be idempotent (IF NOT EXISTS).
 // Reads the connection from <app>-api/.env (values are never printed). With --dry-run, every file
-// is applied and then rolled back. Run via apply-migrations.cmd.
+// is applied and then rolled back. Run via scripts\apply-migrations.ps1.
 //   java --class-path <postgresql.jar> ApplyMigrations.java <api dir> <schema> [--dry-run]
 import java.nio.file.*;
 import java.sql.*;

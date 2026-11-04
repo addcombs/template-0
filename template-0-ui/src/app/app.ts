@@ -106,7 +106,7 @@ export class App {
         { name: 'Maven', logo: 'logos/maven.svg', description: 'Back-end build and dependency management', usage: 'Downloads Java dependencies and builds and tests the Spring Boot API.' },
         { name: 'Spring Boot DevTools', logo: 'logos/spring.svg', description: 'Development-time restarts', usage: 'Restarts the API automatically when code changes during development; it is excluded from production builds.' },
         { name: 'PostgreSQL', logo: 'logos/postgresql.svg', description: 'Account data storage', usage: 'Stores account records so profile changes remain available across sessions.' },
-        { name: 'SQL migrations', logo: 'logos/postgresql.svg', description: 'Versioned database schema scripts', usage: 'Scripts in db/migrations create the app\'s schema and users table, with the unique Cognito subject and email constraints the account API expects; apply-migrations.cmd runs them.' },
+        { name: 'SQL migrations', logo: 'logos/postgresql.svg', description: 'Versioned database schema scripts', usage: 'Scripts in db/migrations create the app\'s schema and users table, with the unique Cognito subject and email constraints the account API expects; scripts/apply-migrations.ps1 runs them.' },
       ],
     },
     {
@@ -120,7 +120,7 @@ export class App {
         { name: 'Amazon CloudFront', icon: 'public', description: 'Content delivery and HTTPS', usage: 'Serves the UI at the app domain and the API at its api subdomain over HTTPS, caching the UI files and passing API requests straight to Lambda.' },
         { name: 'Amazon S3', icon: 'storage', description: 'Object storage', usage: 'Holds the built UI files in a private bucket that only CloudFront can read, and stages the API package for Lambda deployments.' },
         { name: 'AWS Certificate Manager', icon: 'verified_user', description: 'Free TLS certificates', usage: 'Issues and auto-renews the certificates for the app and API domains, validated through DNS records at the domain\'s DNS provider.' },
-        { name: 'Amazon CloudWatch Logs', icon: 'receipt_long', description: 'API logging', usage: 'Collects the Lambda function\'s log output; api-logs.cmd shows recent API logs for troubleshooting.' },
+        { name: 'Amazon CloudWatch Logs', icon: 'receipt_long', description: 'API logging', usage: 'Collects the Lambda function\'s log output; scripts/api-logs.ps1 shows recent API logs for troubleshooting.' },
       ],
     },
     {
@@ -128,7 +128,7 @@ export class App {
       icon: 'build',
       technologies: [
         { name: 'Claude', icon: 'smart_toy', description: 'AI coding agent by Anthropic', usage: 'Generated this application from the angular-app and spring-boot-app agents and templates provided by Adam Combs.' },
-        { name: 'PowerShell & batch scripts', icon: 'terminal', description: 'One-click setup, tests, start-up, and deployment', usage: 'start-all.cmd installs dependencies, builds and tests both apps, then starts the API and UI; test-all.cmd reruns the UI tests and API build; the create-*, deploy-api, and deploy-ui scripts set up and deploy to AWS from project.json.' },
+        { name: 'PowerShell scripts', icon: 'terminal', description: 'Setup, tests, start-up, and deployment', usage: 'scripts/start-all.ps1 installs dependencies, builds and tests both apps, then starts the API and UI; scripts/test-all.ps1 reruns the UI tests and API build; the create-*, deploy-api, and deploy-ui scripts set up and deploy to AWS from project.json.' },
         { name: 'AWS CLI', icon: 'keyboard', description: 'Command-line access to AWS', usage: 'Runs every AWS step in the setup and deploy scripts, from creating the Cognito pool and certificates to uploading the UI and publishing new Lambda versions.' },
       ],
     },

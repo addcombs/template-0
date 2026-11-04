@@ -6,7 +6,7 @@
   <main class="auth-screen">
     <h1 class="welcome-title">Welcome to {{ appName }}</h1>
     <p>Authentication setup is required before you can sign in or create an account.</p>
-    <p>Run <code>create-cognito-pool.cmd</code>; it writes this app's Cognito settings to <code>src/app/project.settings.ts</code>.</p>
+    <p>Run <code>scripts/create-cognito-pool.ps1</code>; it writes this app's Cognito settings to <code>src/app/project.settings.ts</code>.</p>
   </main>
 } @else if (auth.status() === 'signedOut' || auth.status() === 'invalid') {
   <main class="auth-screen">

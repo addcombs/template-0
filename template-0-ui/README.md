@@ -20,7 +20,7 @@ Card logos are served locally from `public/logos`: most come from
 Spring Security, Spring Data JPA, Spring Boot Actuator, and Spring Boot DevTools share the
 Spring logo; Angular-family cards reuse the Angular and Angular Material logos, and SQL
 migrations reuses the PostgreSQL logo. Cards with no bundled, permissively licensed logo (SVG, Material Icons & Lato,
-Claude, and the PowerShell & batch scripts) show a Material icon instead. Logos remain
+Claude, the PowerShell scripts, and the AWS services and tools) show a Material icon instead. Logos remain
 trademarks of their owners; their appearance identifies technologies, not
 an endorsement.
 
@@ -68,11 +68,11 @@ sign-in domain, the sign-in/sign-out redirects for `http://localhost:4200/` and 
 domain, and the API's URL. Sign-in uses authorization-code OAuth with PKCE and a public
 client without a client secret.
 
-To run the full stack locally, double-click `..\start-all.cmd`: it installs
+To run the full stack locally, run `..\scripts\start-all.ps1` in PowerShell: it installs
 dependencies, builds and tests both apps, then starts the API on port 8080 and this
 UI on port 4200 (logs in `..\logs`).
 
-Until `..\create-cognito-pool.cmd` has run, the app displays an authentication setup notice. Build and
+Until `..\scripts\create-cognito-pool.ps1` has run, the app displays an authentication setup notice. Build and
 unit test success do not verify live authentication or account integration;
 verify those flows in a browser after configuring the services.
 

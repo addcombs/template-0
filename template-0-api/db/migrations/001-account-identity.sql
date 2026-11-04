@@ -1,4 +1,4 @@
--- Applied by apply-migrations.cmd, which replaces ${schema} with the app's schema and runs this file
+-- Applied by scripts\apply-migrations.ps1, which replaces ${schema} with the app's schema and runs this file
 -- in a transaction. It runs on every invocation, so every statement must be idempotent.
 
 CREATE SCHEMA IF NOT EXISTS ${schema};

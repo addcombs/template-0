@@ -15,7 +15,7 @@ $account = Invoke-AwsCli @('sts','get-caller-identity','--query','Account','--ou
 $bucket = UiBucket $account
 $bucketHost = "$bucket.s3.$awsRegion.amazonaws.com"
 $certArn = Invoke-AwsCli @('acm','list-certificates','--certificate-statuses','ISSUED','--query',"CertificateSummaryList[?DomainName=='$domain'].CertificateArn | [0]",'--output','text') -Region $cloudFrontRegion
-if (-not $certArn -or $certArn -eq 'None') { Fail "No ISSUED certificate for $domain in $cloudFrontRegion. Run request-certificate.cmd first." }
+if (-not $certArn -or $certArn -eq 'None') { Fail "No ISSUED certificate for $domain in $cloudFrontRegion. Run scripts\request-certificate.ps1 first." }
 Step "account: $account, bucket: $bucket, certificate: $certArn"
 
 # --- origin access control ---

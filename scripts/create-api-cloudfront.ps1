@@ -11,9 +11,9 @@ $cachingDisabled  = '4135ea2d-6df8-44a3-9df3-4b5a84be39ad'
 $allViewerExceptHost = 'b689b0a8-53d0-40ab-baf2-68738e2966ac'
 
 $certArn = Invoke-AwsCli @('acm','list-certificates','--certificate-statuses','ISSUED','--query',"CertificateSummaryList[?DomainName=='$apiDomain'].CertificateArn | [0]",'--output','text') -Region $cloudFrontRegion
-if (-not $certArn -or $certArn -eq 'None') { Fail "No ISSUED certificate for $apiDomain in $cloudFrontRegion. Run request-certificate.cmd first." }
+if (-not $certArn -or $certArn -eq 'None') { Fail "No ISSUED certificate for $apiDomain in $cloudFrontRegion. Run scripts\request-certificate.ps1 first." }
 $fnUrl = Invoke-AwsCli @('lambda','get-function-url-config','--function-name',$names.Function,'--qualifier','live','--query','FunctionUrl','--output','text') -AllowFail
-if (-not $fnUrl) { Fail "No function URL on $($names.Function):live. Run create-function-url.cmd first." }
+if (-not $fnUrl) { Fail "No function URL on $($names.Function):live. Run scripts\create-function-url.ps1 first." }
 $fnHost = ([uri]$fnUrl).Host
 Step "certificate: $certArn, API: $fnHost"
 

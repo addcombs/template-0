@@ -71,7 +71,7 @@ function Write-Json($path, $obj) { Write-Utf8 $path ($obj | ConvertTo-Json -Dept
 
 $cognitoStateFile = Join-Path $state 'cognito-pool.json'
 function Get-CognitoIds {
-  if (-not (Test-Path $cognitoStateFile)) { Fail "state\cognito-pool.json not found. Run create-cognito-pool.cmd first." }
+  if (-not (Test-Path $cognitoStateFile)) { Fail "state\cognito-pool.json not found. Run scripts\create-cognito-pool.ps1 first." }
   return Get-Content $cognitoStateFile -Raw | ConvertFrom-Json
 }
 
