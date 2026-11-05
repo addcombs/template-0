@@ -3,7 +3,7 @@
 Standalone Angular 21 and Angular Material 21 frontend with responsive navigation,
 adjustable brightness, Cognito sign-in and registration, account profile flows,
 and a technology dashboard. The signed-in toolbar uses the theme surface color with primary-colored text and icons,
-over a decorative inline SVG pixel mosaic (`src/app/theme/toolbar-background.component.ts`)
+over a decorative inline SVG pixel mosaic (`src/app/theme/toolbar-background.ts`)
 filled with the theme's primary and secondary colors, so it follows light/dark mode and brightness. The footer
 displays the account API's health, polling `/actuator/health` every 30 seconds.
 The dashboard cards explain the roles of the included technologies and are
@@ -98,5 +98,6 @@ npm test
 ```
 
 Build output is written to `dist/`. Unit tests use the Angular CLI and Vitest.
-The template's existing initial bundle can exceed the 500 kB warning budget;
-the error limit is 1 MB.
+The initial bundle (about 830 kB, 180 kB compressed, mostly Angular Material and Amplify Auth)
+warns above 1 MB and fails above 1.5 MB. Each component stylesheet warns above 4 kB, so the
+toolbar's brightness-slider styles live in `src/app/main/brightness-control.scss`, apart from `app.scss`.

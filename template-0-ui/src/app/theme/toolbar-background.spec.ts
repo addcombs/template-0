@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ToolbarBackgroundComponent, buildPixelLayers } from './toolbar-background.component';
+import { ToolbarBackgroundComponent, buildPixelLayers } from './toolbar-background';
 
 describe('ToolbarBackgroundComponent', () => {
   it('renders a decorative SVG hidden from assistive technology', () => {

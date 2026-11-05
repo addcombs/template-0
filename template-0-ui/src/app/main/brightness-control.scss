@@ -1,0 +1,70 @@
+// The toolbar's brightness slider. Kept apart from app.scss so each stays within the component style budget.
+
+.brightness-control {
+  display: flex;
+  align-items: center;
+  flex: 0 1 120px;
+  min-width: 48px;
+}
+
+.brightness-control[hidden] {
+  display: none;
+}
+
+.brightness-control input {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.brightness-control input:focus-visible {
+  outline: 2px solid var(--mat-sys-on-surface);
+  outline-offset: 3px;
+}
+
+.brightness-control input::-webkit-slider-runnable-track {
+  height: 6px;
+  border: 1px solid var(--mat-sys-on-surface);
+  border-radius: 999px;
+  background: linear-gradient(to right, #121212, #fafafa);
+}
+
+.brightness-control input::-moz-range-track {
+  height: 4px;
+  border: 1px solid var(--mat-sys-on-surface);
+  border-radius: 999px;
+  background: linear-gradient(to right, #121212, #fafafa);
+}
+
+.brightness-control input::-webkit-slider-thumb {
+  appearance: none;
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  margin-top: -8px;
+  border: 2px solid var(--mat-sys-on-surface);
+  border-radius: 50%;
+  background: var(--mat-sys-primary);
+  box-shadow: 0 0 0 2px var(--mat-sys-surface);
+}
+
+.brightness-control input::-moz-range-thumb {
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--mat-sys-on-surface);
+  border-radius: 50%;
+  background: var(--mat-sys-primary);
+  box-shadow: 0 0 0 2px var(--mat-sys-surface);
+}
+
+@media (forced-colors: active) {
+  .brightness-control input {
+    appearance: auto;
+  }
+}

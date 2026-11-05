@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('aws-amplify/auth', () => mocks);
 
-import { RegistrationComponent } from './registration.component';
+import { RegistrationComponent } from './registration';
 
 describe('RegistrationComponent', () => {
   beforeEach(async () => {

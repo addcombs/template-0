@@ -14,14 +14,14 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { map } from 'rxjs';
 import { ThemeService } from '../theme/theme.service';
 import { AuthService } from '../auth/auth.service';
-import { RegistrationComponent } from '../auth/registration.component';
+import { RegistrationComponent } from '../auth/registration';
 import { AccountService } from './account/account.service';
-import { AccountDetailsComponent } from './account/account-details.component';
+import { AccountDetailsComponent } from './account/account-details';
 import { ApiStatusService } from './api-status/api-status.service';
 import { apiUrl } from '../api-url';
 import { APP_DISPLAY_NAME, DEVELOPER_NAME } from './app-name';
-import { AboutDialogComponent } from './about/about-dialog.component';
-import { ToolbarBackgroundComponent } from '../theme/toolbar-background.component';
+import { AboutDialogComponent } from './about/about-dialog';
+import { ToolbarBackgroundComponent } from '../theme/toolbar-background';
 
 /** A dashboard card: shows `logo` (a local SVG in public/logos) or, when no licensed logo is bundled, a Material `icon`. */
 export interface Technology {
@@ -42,7 +42,7 @@ export interface TechnologyGroup {
   selector: 'app-root',
   imports: [MatButtonModule, MatCardModule, MatIconModule, MatListModule, MatMenuModule, MatSidenavModule, MatTabsModule, MatToolbarModule, MatTooltipModule, RegistrationComponent, ToolbarBackgroundComponent],
   templateUrl: './app.html',
-  styleUrl: './app.scss',
+  styleUrls: ['./app.scss', './brightness-control.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
