@@ -22,10 +22,12 @@ $profileName = $project.aws.profile
 $awsRegion   = $project.aws.region
 $domain      = $project.domain.host
 $apex        = $project.domain.apex
-$subdomain   = $domain -replace "\.$([regex]::Escape($apex))$", ''
+$isApexHost  = $domain -eq $apex
+# The DNS record name at the provider: the host's part before the apex, or @ for the apex itself.
+$subdomain   = if ($isApexHost) { '@' } else { $domain -replace "\.$([regex]::Escape($apex))$", '' }
 # The API has its own CloudFront distribution at api.<host>, e.g. api.template-0.acombs-dev.com.
 $apiDomain    = "api.$domain"
-$apiSubdomain = "api.$subdomain"
+$apiSubdomain = if ($isApexHost) { 'api' } else { "api.$subdomain" }
 # ACM certificates used by CloudFront must be in us-east-1, whatever the app's region.
 $cloudFrontRegion = 'us-east-1'
 # The app's schema in the shared database: project.json database.schema, or else the app name in

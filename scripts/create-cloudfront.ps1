@@ -69,5 +69,9 @@ Step "Add this record at $($project.domain.dnsProvider) (Domains > $apex > DNS >
 Step '  Type: CNAME'
 Step "  Name: $subdomain"
 Step "  Data: $distDomain"
+if ($isApexHost) {
+  Step "note: DNS allows no CNAME at the apex ($apex). Point it at $distDomain with an ALIAS/ANAME record or a"
+  Step '      Route 53 alias A/AAAA record; a provider without those cannot serve the apex from CloudFront.'
+}
 Step "DONE. Distribution $distId at $distDomain"
 Read-Host 'Press Enter to close'

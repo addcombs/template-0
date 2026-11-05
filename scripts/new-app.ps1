@@ -41,7 +41,7 @@ if ($Name -cnotmatch '^[a-z][a-z0-9]*(-[a-z0-9]+)*$' -or $Name.Length -gt 30) {
 }
 if ($Name -eq $app) { Fail "the new app needs a name other than $app." }
 if (-not $HostName) { $HostName = "$Name.$apex" }
-if ($HostName -notmatch "\.$([regex]::Escape($apex))$") { Fail "host $HostName is not under $apex (project.json domain.apex)." }
+if ($HostName -ne $apex -and $HostName -notmatch "\.$([regex]::Escape($apex))$") { Fail "host $HostName is neither $apex nor under it (project.json domain.apex)." }
 if (-not $Primary) { $Primary = $project.theme.primary }
 if (-not $Secondary) { $Secondary = $project.theme.secondary }
 foreach ($c in @($Primary, $Secondary)) { if ($c -notmatch '^#[0-9A-Fa-f]{6}$') { Fail "colour ${c}: use #RRGGBB." } }
