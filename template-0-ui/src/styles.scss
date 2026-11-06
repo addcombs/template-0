@@ -113,3 +113,15 @@ body {
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);
 }
+
+// Display text keeps the arrow rather than the text-selection cursor; fields where text is typed
+// still show it, and links and buttons keep their pointer.
+body {
+  cursor: default;
+}
+
+input:not([type='range'], [type='checkbox'], [type='radio']),
+textarea,
+[contenteditable='true'] {
+  cursor: text;
+}
