@@ -52,7 +52,7 @@ export function buildPixelLayers(seed = 26): PixelLayer[] {
 const LAYERS = buildPixelLayers();
 
 /**
- * Decorative toolbar background drawn inline so it follows the live theme: cells are filled
+ * Decorative toolbar and footer background drawn inline so it follows the live theme: cells are filled
  * with the Material primary and secondary system colors, so light/dark mode and the brightness
  * slider recolor it without regenerating an image.
  */
