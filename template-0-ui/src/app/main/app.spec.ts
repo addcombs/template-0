@@ -72,7 +72,9 @@ describe('App', () => {
     fixture.detectChanges();
     const credit: HTMLElement = fixture.nativeElement.querySelector('footer.app-footer .app-credit');
     expect(credit.textContent?.trim()).toBe('Developed by Adam Combs');
-    expect(credit.querySelector('.app-credit-name')?.textContent).toBe('Adam Combs');
+    const name = credit.querySelector('a.app-credit-name') as HTMLAnchorElement;
+    expect(name.textContent).toBe('Adam Combs');
+    expect(name.href).toBe('https://acombs-dev.com/');
   });
 
   it('shows the current API health in the footer, not the toolbar', () => {
