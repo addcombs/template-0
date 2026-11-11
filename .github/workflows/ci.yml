@@ -188,10 +188,16 @@ jobs:
           $settings = Get-Content template-0-ui/src/app/project.settings.ts -Raw
           $pool = [regex]::Match($settings, "userPoolId: '([^']+)'").Groups[1].Value
           $client = [regex]::Match($settings, "userPoolClientId: '([^']+)'").Groups[1].Value
+          # The app's logo above the sign-in form, in light and dark mode.
+          $logo = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes('template-0-ui/public/logos/logo.svg'))
+          $assets = Join-Path $env:RUNNER_TEMP 'managed-login-assets.json'
+          [System.IO.File]::WriteAllText($assets, (ConvertTo-Json -Compress @(
+            @{ Category = 'FORM_LOGO'; ColorMode = 'LIGHT'; Extension = 'SVG'; Bytes = $logo },
+            @{ Category = 'FORM_LOGO'; ColorMode = 'DARK'; Extension = 'SVG'; Bytes = $logo })))
           $id = aws cognito-idp describe-managed-login-branding-by-client --user-pool-id $pool --client-id $client `
             --query ManagedLoginBranding.ManagedLoginBrandingId --output text
           aws cognito-idp update-managed-login-branding --user-pool-id $pool --managed-login-branding-id $id `
-            --settings "file://$filled" --query ManagedLoginBranding.LastModifiedDate --output text
+            --settings "file://$filled" --assets "file://$assets" --query ManagedLoginBranding.LastModifiedDate --output text
       - name: Check the live site
         run: |
           curl --fail --silent --show-error --output /dev/null "https://$DOMAIN/"

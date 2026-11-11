@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Template 0">
+  <!-- Three stacked layers, for the UI, the API and the cloud beneath them. -->
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <path d="M32 8L56 20L32 32L8 20Z" fill="#26A1D5" stroke="#26A1D5" stroke-width="4"/>
+    <path d="M8 31L32 43L56 31" fill="none" stroke="#26A1D5" stroke-width="5"/>
+    <path d="M8 43L32 55L56 43" fill="none" stroke="#26D5B2" stroke-width="5"/>
+  </g>
+</svg>

@@ -50,6 +50,18 @@ mat-sidenav mat-nav-list {
   font: inherit;
 }
 
+// Decorative, as the title beside it says the same.
+.app-logo {
+  display: block;
+  flex-shrink: 0;
+  height: 48px;
+  margin-left: 4px;
+}
+
+.app-logo-accent {
+  stroke: var(--mat-sys-secondary);
+}
+
 .app-title {
   margin-left: 8px;
   font-size: 1.25rem;
@@ -194,6 +206,13 @@ mat-sidenav mat-nav-list {
   .card-grid {
     grid-template-columns: 1fr;
   }
+}
+
+// The logo above the sign-in welcome. Decorative, as the heading names the app.
+.auth-logo {
+  display: block;
+  width: 96px;
+  height: 96px;
 }
 
 .auth-screen {

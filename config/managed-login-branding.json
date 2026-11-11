@@ -48,7 +48,7 @@
    "logo": {
     "location": "CENTER",
     "position": "TOP",
-    "enabled": false,
+    "enabled": true,
     "formInclusion": "IN"
    },
    "darkMode": {

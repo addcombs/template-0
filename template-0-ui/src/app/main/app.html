@@ -17,6 +17,7 @@
         <p>Loading registration...</p>
       }
     } @else {
+    <img class="auth-logo" src="logos/logo.svg" alt="" width="96" height="96" />
     <h1 class="welcome-title">Welcome to {{ appName }}</h1>
     <p>Sign in or create an account to continue.</p>
     @if (auth.error()) {
@@ -76,6 +77,14 @@
       >
         <mat-icon>menu</mat-icon>
       </button>
+      <!-- logos/logo.svg, drawn here in the theme's colours so it follows light and dark mode. -->
+      <svg class="app-logo" viewBox="0 0 64 64" width="48" height="48" aria-hidden="true">
+        <g stroke-linecap="round" stroke-linejoin="round">
+          <path d="M32 8L56 20L32 32L8 20Z" fill="currentColor" stroke="currentColor" stroke-width="4" />
+          <path d="M8 31L32 43L56 31" fill="none" stroke="currentColor" stroke-width="5" />
+          <path class="app-logo-accent" d="M8 43L32 55L56 43" fill="none" stroke-width="5" />
+        </g>
+      </svg>
       <span class="app-title">{{ appName }}</span>
       <span class="spacer"></span>
       <div class="brightness-control" [hidden]="!brightnessOpen()">
