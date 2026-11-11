@@ -1,5 +1,5 @@
 // Generated from project.json and state\cognito-pool.json by Sync-UiConfig in scripts\common.ps1,
-// which start-all and deploy-ui run before building. Edit those files, not this one.
+// which start-all runs before building. Edit those files, not this one.
 export const PROJECT_SETTINGS = {
   appName: 'template-0',
   displayName: '',

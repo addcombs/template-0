@@ -1,0 +1,198 @@
+# Builds and tests the UI and the API on every push and pull request, as scripts\start-all.ps1 does
+# locally. Pushes to main that pass, and runs started by hand on main (Actions > CI > Run workflow,
+# e.g. for a new app's first deploy), then deploy both, once scripts\create-github-deploy-role.ps1
+# has made the deploy role and its ARN is the repository's Actions variable AWS_DEPLOY_ROLE_ARN.
+# The UI deploy also gives the Cognito sign-in page the theme colors. The deploy publishes new API
+# code only; the function's settings stay as deploy-api.ps1 set them, so no secrets are stored in GitHub.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Newer pushes cancel older pull request runs, but never a deploy partway through.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ui:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: template-0-ui
+    env:
+      NG_CLI_ANALYTICS: 'false'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: template-0-ui/package-lock.json
+      # start-all regenerates the palettes when project.json's colors change; fail if that was skipped.
+      - name: Check theme palettes match project.json
+        run: |
+          primary=$(jq -r .theme.primary ../project.json)
+          secondary=$(jq -r .theme.secondary ../project.json)
+          grep -qF "generated from primary: $primary, secondary: $secondary" src/app/theme/generated_theme-colors.scss \
+            || { echo "::error::Theme palettes are not from project.json's colors. Run scripts\\start-all.ps1 to regenerate them."; exit 1; }
+      # package.json pins npm 11 (packageManager); Node 22's npm 10 rejects the lock file.
+      - run: npm install -g npm@11.6.1
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - run: npm test -- --watch=false
+      # Angular builds to dist/<angular.json project name>/browser; deploy-ui uploads that folder.
+      - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
+        with:
+          name: ui
+          path: template-0-ui/dist/
+          retention-days: 1
+
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: template-0-api
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - run: mvn --batch-mode --no-transfer-progress verify
+
+  deploy-api:
+    needs: [ui, api]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ROLE_ARN != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    concurrency:
+      group: deploy-api
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: template-0-api
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - name: Read project.json
+        run: |
+          echo "APP=$(jq -r .name ../project.json)" >> "$GITHUB_ENV"
+          echo "AWS_REGION=$(jq -r .aws.region ../project.json)" >> "$GITHUB_ENV"
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      # The api job has already run the tests.
+      - run: mvn -P lambda --batch-mode --no-transfer-progress -DskipTests package
+      - name: Upload the code and point the live alias at a new version
+        run: |
+          account=$(aws sts get-caller-identity --query Account --output text)
+          aws s3 cp target/*-lambda.zip "s3://$APP-deploy-$account/$APP-api-lambda.zip" --only-show-errors
+          aws lambda update-function-code --function-name "$APP-api" --s3-bucket "$APP-deploy-$account" \
+            --s3-key "$APP-api-lambda.zip" --query LastUpdateStatus --output text
+          aws lambda wait function-updated-v2 --function-name "$APP-api"
+          echo 'Publishing a version; SnapStart takes the snapshot now (a few minutes)...'
+          version=$(aws lambda publish-version --function-name "$APP-api" --query Version --output text)
+          aws lambda wait published-version-active --function-name "$APP-api" --qualifier "$version"
+          aws lambda update-alias --function-name "$APP-api" --name live --function-version "$version" \
+            --query AliasArn --output text
+          echo "::notice::API version $version is live."
+      - name: Check the live API
+        run: |
+          domain=$(jq -r .domain.host ../project.json)
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 "https://api.$domain/actuator/health"
+          # The health check is public, so it misses failures in the security chain (such as a 502 on
+          # every signed-in request); without a token these must reach it and be refused with 401.
+          for request in "GET /api/account" "PUT /api/account"; do
+            status=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+              --request "${request% *}" "https://api.$domain${request#* }")
+            echo "$request without a token: $status"
+            [ "$status" = 401 ] || { echo "::error::$request without a token returned $status, not 401."; exit 1; }
+          done
+
+  deploy-ui:
+    needs: [ui, api]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ROLE_ARN != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    concurrency:
+      group: deploy-ui
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+      # new-app.ps1 leaves the Cognito IDs empty until create-cognito-pool.ps1 fills them in.
+      - name: Check the UI settings have the Cognito IDs
+        run: |
+          grep -qE "userPoolId: '[^']+'" template-0-ui/src/app/project.settings.ts \
+            || { echo "::error::template-0-ui/src/app/project.settings.ts has no Cognito IDs. Run scripts\\create-cognito-pool.ps1 and commit the file."; exit 1; }
+          echo "APP=$(jq -r .name project.json)" >> "$GITHUB_ENV"
+          echo "DOMAIN=$(jq -r .domain.host project.json)" >> "$GITHUB_ENV"
+          echo "AWS_REGION=$(jq -r .aws.region project.json)" >> "$GITHUB_ENV"
+      - uses: actions/download-artifact@v4
+        with:
+          name: ui
+          path: dist
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      # Hashed assets can be cached for a year; index.html must always be re-checked. The files from
+      # public/ (logos/ and favicon.ico) keep their names when they change, so they are cached for an
+      # hour and CloudFront's copies are dropped on each deploy.
+      - name: Upload to S3 and refresh CloudFront
+        run: |
+          dist=$(dirname dist/*/browser/index.html)
+          account=$(aws sts get-caller-identity --query Account --output text)
+          bucket="$APP-ui-$account"
+          aws s3 sync "$dist" "s3://$bucket" --delete --exclude index.html --exclude 'logos/*' --exclude favicon.ico \
+            --cache-control 'public,max-age=31536000,immutable' --only-show-errors
+          aws s3 sync "$dist" "s3://$bucket" --delete --exclude '*' --include 'logos/*' --include favicon.ico \
+            --cache-control 'public,max-age=3600' --only-show-errors
+          aws s3 cp "$dist/index.html" "s3://$bucket/index.html" --cache-control no-cache \
+            --content-type text/html --only-show-errors
+          dist_id=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Aliases.Items && contains(Aliases.Items, '$DOMAIN')].Id | [0]" --output text)
+          id=$(aws cloudfront create-invalidation --distribution-id "$dist_id" --paths /index.html / '/logos/*' /favicon.ico \
+            --query Invalidation.Id --output text)
+          aws cloudfront wait invalidation-completed --distribution-id "$dist_id" --id "$id"
+      # So the sign-in page always has the site's colors: config/managed-login-branding.json filled in
+      # from the theme palettes by scripts/managed-login-style.ps1.
+      - name: Brand the sign-in page with the theme colors
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          . ./scripts/managed-login-style.ps1
+          $project = Get-Content project.json -Raw | ConvertFrom-Json
+          $style = Get-ManagedLoginStyle template-0-ui/src/app/theme/generated_theme-colors.scss config/managed-login-branding.json `
+            $project.theme.primary $project.theme.secondary
+          $filled = Join-Path $env:RUNNER_TEMP 'managed-login-branding.json'
+          [System.IO.File]::WriteAllText($filled, $style)
+          $settings = Get-Content template-0-ui/src/app/project.settings.ts -Raw
+          $pool = [regex]::Match($settings, "userPoolId: '([^']+)'").Groups[1].Value
+          $client = [regex]::Match($settings, "userPoolClientId: '([^']+)'").Groups[1].Value
+          $id = aws cognito-idp describe-managed-login-branding-by-client --user-pool-id $pool --client-id $client `
+            --query ManagedLoginBranding.ManagedLoginBrandingId --output text
+          aws cognito-idp update-managed-login-branding --user-pool-id $pool --managed-login-branding-id $id `
+            --settings "file://$filled" --query ManagedLoginBranding.LastModifiedDate --output text
+      - name: Check the live site
+        run: |
+          curl --fail --silent --show-error --output /dev/null "https://$DOMAIN/"
+          echo "::notice::Deployed https://$DOMAIN/"

@@ -7,7 +7,7 @@ param([switch]$DryRun)
 
 $pgJar = Get-ChildItem "$env:USERPROFILE\.m2\repository\org\postgresql\postgresql" -Recurse -Filter 'postgresql-*.jar' -ErrorAction SilentlyContinue |
   Where-Object Name -notmatch 'sources' | Sort-Object { [version]($_.Directory.Name -replace '[^0-9.]', '') } | Select-Object -Last 1
-if (-not $pgJar) { Fail 'PostgreSQL driver not found in ~\.m2. Run scripts\build-lambda.ps1 (or any Maven build of the API) first.' }
+if (-not $pgJar) { Fail 'PostgreSQL driver not found in ~\.m2. Run scripts\start-all.ps1 (or any Maven build of the API) first.' }
 if (-not (Test-Path (Join-Path $apiDir '.env'))) { Fail ".env not found in $app-api." }
 Step "schema: $dbSchema$(if ($DryRun) { ' (dry run)' })"
 

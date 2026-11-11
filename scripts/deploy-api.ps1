@@ -1,20 +1,28 @@
-# Deploys the API to AWS Lambda (setup step 2): IAM role, deploy bucket, zip upload,
-# function with SnapStart, published version and the `live` alias. Safe to re-run: existing
-# resources are reused and the function is updated.
+# Builds, tests and deploys the API to AWS Lambda: IAM role, deploy bucket, zip
+# upload, function with SnapStart and its settings, published version and the `live` alias. Safe
+# to re-run: existing resources are reused and the function is updated. Pushes to main deploy new
+# code (.github/workflows/ci.yml) but never the settings, so re-run this after changing .env or
+# the Cognito pool.
 # Secrets: settings are read from <app>-api\.env into the git-ignored lambda-env.json, and
-# no AWS response that contains environment variables is printed or logged. Log: logs\deploy-api.log
+# no AWS response that contains environment variables is printed or logged.
+# Logs: logs\deploy-api.log, logs\deploy-api-build.log (the full Maven output)
 . "$PSScriptRoot\common.ps1" -LogName 'deploy-api.log' -Title 'API deploy'
 $function = $names.Function
 $roleName = $names.Role
 # Wraps the adapter's SpringDelegatingLambdaContainerHandler so response headers reach function URLs.
 $handler  = "$javaPackage.lambda.FunctionUrlHandler"
 $mainClass = "$javaPackage.ApiApplication"
-$zip = Get-ChildItem (Join-Path $apiDir 'target\*-lambda.zip') -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | Select-Object -Last 1
 
 Set-Location $apiDir
 if (-not (Get-Command aws -ErrorAction SilentlyContinue)) { Fail 'AWS CLI not found on PATH.' }
-if (-not $zip) { Fail "Lambda zip not found. Run scripts\build-lambda.ps1 first." }
-$zip = $zip.FullName
+
+# --- build the Lambda package, <app>-api\target\*-lambda.zip ---
+Step 'building and testing the Lambda package...'
+$buildLog = Join-Path $logs 'deploy-api-build.log'
+& mvn.cmd -P lambda --batch-mode --no-transfer-progress package *>&1 | ForEach-Object { "$_" } | Set-Content $buildLog
+if ($LASTEXITCODE -ne 0) { Fail "Maven build failed (exit $LASTEXITCODE); see logs\deploy-api-build.log" }
+$zip = (Get-ChildItem (Join-Path $apiDir 'target\*-lambda.zip') | Sort-Object LastWriteTime | Select-Object -Last 1).FullName
+Step "built $(Split-Path -Leaf $zip) ($([math]::Round((Get-Item $zip).Length / 1MB, 1)) MB)"
 
 # --- account ---
 $account = Invoke-AwsCli @('sts','get-caller-identity','--query','Account','--output','text')

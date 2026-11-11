@@ -8,7 +8,7 @@
 #  - a managed-login style for the app client (Cognito's default if it has none); the current
 #    style is saved in full to logs\managed-login-branding.json (no secrets) as a starting point for
 #    config\managed-login-branding.json, whose theme colours are palette references such as
-#    {primary-40}; scripts\brand-managed-login.ps1 then applies the app's colours
+#    {primary-40}; each deploy from main then applies the app's colours (.github/workflows/ci.yml)
 # Safe to re-run: reuses the pool, client, domain and style if they exist.
 # Writes the IDs to state\cognito-pool.json. Log: logs\cognito-pool.log
 . "$PSScriptRoot\common.ps1" -LogName 'cognito-pool.log' -Title 'Cognito pool'

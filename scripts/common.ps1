@@ -41,8 +41,11 @@ $names = [ordered]@{
   Function     = "$app-api"
   Role         = "$app-api-lambda"
   DeployKey    = "$app-api-lambda.zip"
+  GitHubDeployRole = "$app-github-deploy"
   UserPool     = "$app-users"
   UserClient   = "$app-ui"
+  SignUpTrigger     = "$app-auto-confirm"
+  SignUpTriggerRole = "$app-auto-confirm-lambda"
   Oac          = "$app-ui-oac"
   # ACM idempotency tokens allow only letters and digits.
   CertToken    = (($app -replace '[^A-Za-z0-9]', '') + 'cert')
@@ -96,7 +99,7 @@ function Sync-UiConfig {
   $urls = "[$(Ts 'http://localhost:4200/'), $(Ts "https://$domain/")]"
   $text = @(
     "// Generated from project.json and state\cognito-pool.json by Sync-UiConfig in scripts\common.ps1,",
-    '// which start-all and deploy-ui run before building. Edit those files, not this one.',
+    '// which start-all runs before building. Edit those files, not this one.',
     'export const PROJECT_SETTINGS = {',
     "  appName: $(Ts $app),",
     "  displayName: $(Ts $project.displayName),",
