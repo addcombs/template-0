@@ -23,7 +23,7 @@ after changing `.env` or the Cognito pool, run `scripts\deploy-api.ps1` again.
 ## Create a new app
 
 ```powershell
-.\scripts\new-app.ps1 -Name project-1 -Primary '#RRGGBB' -Secondary '#RRGGBB'
+.\scripts\new-app.ps1 -Name project-1 -Primary '#RRGGBB'
 ```
 
 copies this project to `..\project-1` with the folders, Java package, names, host

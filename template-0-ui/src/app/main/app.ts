@@ -120,7 +120,7 @@ export class App {
         { name: 'Amazon CloudFront', icon: 'public', description: 'Content delivery and HTTPS', usage: 'Serves the UI at the app domain and the API at its api subdomain over HTTPS, caching the UI files and passing API requests straight to Lambda.' },
         { name: 'Amazon S3', icon: 'storage', description: 'Object storage', usage: 'Holds the built UI files in a private bucket that only CloudFront can read, and stages the API package for Lambda deployments.' },
         { name: 'AWS Certificate Manager', icon: 'verified_user', description: 'Free TLS certificates', usage: 'Issues and auto-renews the certificates for the app and API domains, validated through DNS records at the domain\'s DNS provider.' },
-        { name: 'Amazon CloudWatch Logs', icon: 'receipt_long', description: 'API logging', usage: 'Collects the Lambda function\'s log output; scripts/api-logs.ps1 shows recent API logs for troubleshooting.' },
+        { name: 'Amazon CloudWatch Logs', icon: 'receipt_long', description: 'API logging', usage: 'Collects the Lambda function\'s log output, for troubleshooting the API.' },
       ],
     },
     {
