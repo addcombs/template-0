@@ -225,6 +225,11 @@ mat-sidenav mat-nav-list {
   text-align: center;
 }
 
+// Space between the stacked Sign in and Create account buttons.
+.auth-screen > button + button {
+  margin-top: 12px;
+}
+
 .auth-error {
   color: var(--mat-sys-error);
 }
