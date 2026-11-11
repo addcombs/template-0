@@ -1,0 +1,25 @@
+// The toolbar on narrow screens. Kept apart from app.scss so each stays within the component style budget.
+
+.app-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .app-content > .app-toolbar {
+    gap: 0;
+    padding-inline: 4px;
+  }
+
+  .app-title {
+    margin-left: 4px;
+    font-size: 1.125rem;
+  }
+
+  // The title makes room for the open brightness slider, which keeps its width beside the icon.
+  .app-toolbar.brightness-open .app-title {
+    display: none;
+  }
+}

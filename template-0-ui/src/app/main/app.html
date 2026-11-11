@@ -49,10 +49,6 @@
       </button>
     </mat-toolbar>
     <mat-nav-list>
-      <a mat-list-item href="#" (click)="sidenavOpened.set(!isWide())">
-        <mat-icon matListItemIcon>home</mat-icon>
-        <span matListItemTitle>Home</span>
-      </a>
       @for (group of technologyGroups; track group.label; let i = $index) {
         <a
           mat-list-item
@@ -68,7 +64,7 @@
   </mat-sidenav>
 
   <mat-sidenav-content class="app-content">
-    <mat-toolbar color="primary" class="app-toolbar">
+    <mat-toolbar color="primary" class="app-toolbar" [class.brightness-open]="brightnessOpen()">
       <app-toolbar-background />
       <button
         mat-icon-button
@@ -138,10 +134,6 @@
         <mat-icon>more_vert</mat-icon>
       </button>
       <mat-menu #moreMenu="matMenu" xPosition="before">
-        <a mat-menu-item [href]="apiDocsUrl" target="_blank" rel="noopener">
-          <mat-icon>api</mat-icon>
-          <span>API docs</span>
-        </a>
         <button mat-menu-item type="button" (click)="openAbout()">
           <mat-icon>info</mat-icon>
           <span>About</span>
@@ -191,14 +183,17 @@
     <footer class="app-footer">
       <app-toolbar-background />
       <span class="app-credit">Developed by <a class="app-credit-name" href="https://acombs-dev.com/">{{ developerName }}</a></span>
-      <span>API</span>
-      <mat-icon
-        class="api-status"
-        [class.api-down]="apiStatus() === 'down'"
-        role="img"
-        [attr.aria-label]="apiStatusLabel()"
-        [matTooltip]="apiStatusLabel()"
-      >{{ apiStatus() === 'up' ? 'cloud_done' : apiStatus() === 'down' ? 'cloud_off' : 'cloud_queue' }}</mat-icon>
+      <a class="api-link" [href]="apiDocsUrl" target="_blank" rel="noopener">
+        <span>API</span>
+        <mat-icon
+          class="api-status"
+          [class.api-down]="apiStatus() === 'down'"
+          role="img"
+          [attr.aria-label]="apiStatusLabel()"
+          [matTooltip]="apiStatusLabel()"
+        >{{ apiStatus() === 'up' ? 'cloud_done' : apiStatus() === 'down' ? 'cloud_off' : 'cloud_queue' }}</mat-icon>
+        <span class="cdk-visually-hidden">docs (opens in a new tab)</span>
+      </a>
     </footer>
   </mat-sidenav-content>
 </mat-sidenav-container>

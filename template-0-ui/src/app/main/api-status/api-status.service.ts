@@ -11,7 +11,7 @@ export class ApiStatusService {
   private readonly http = inject(HttpClient);
 
   readonly status = toSignal(
-    timer(0, 30_000).pipe(
+    timer(0, 5 * 60_000).pipe(
       switchMap(() =>
         this.http.get<{ status: string }>(apiUrl('/actuator/health')).pipe(
           map((health): ApiStatus => health?.status === 'UP' ? 'up' : 'down'),

@@ -85,6 +85,11 @@ describe('App', () => {
     expect(fixture.nativeElement.querySelector('mat-toolbar .api-status')).toBeNull();
     expect(icon.getAttribute('aria-label')).toBe('Checking API status');
     expect(icon.textContent?.trim()).toBe('cloud_queue');
+    // The label and icon link to the API's Swagger docs in a new tab.
+    const link = icon.closest('a.api-link') as HTMLAnchorElement;
+    expect(link.href).toMatch(/\/swagger-ui\.html$/);
+    expect(link.target).toBe('_blank');
+    expect(link.textContent).toContain('API');
 
     apiStatus.status.set('up');
     fixture.detectChanges();
@@ -163,7 +168,7 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     await fixture.whenStable();
-    const navItems: HTMLElement[] = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('mat-nav-list a[mat-list-item]')).slice(1);
+    const navItems: HTMLElement[] = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('mat-nav-list a[mat-list-item]'));
     expect(navItems.map((item) => item.querySelector('[matListItemTitle]')?.textContent?.trim()))    .toEqual(['Front-end', 'Back-end', 'Cloud', 'Tools']);
     navItems[2].click();
     fixture.detectChanges();
@@ -350,7 +355,7 @@ describe('App', () => {
     expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Account details');
   });
 
-  it('places a more-options menu last in the toolbar with API docs and About', () => {
+  it('places a more-options menu last in the toolbar with About, the API docs being in the footer', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const toolbarButtons = fixture.nativeElement.querySelectorAll('.app-content > .app-toolbar > button');
@@ -359,11 +364,7 @@ describe('App', () => {
     more.click();
     fixture.detectChanges();
     const panel = document.querySelector('.mat-mdc-menu-panel');
-    const apiDocs = panel?.querySelector<HTMLAnchorElement>('a[mat-menu-item]');
-    expect(apiDocs?.textContent).toContain('API docs');
-    expect(apiDocs?.getAttribute('href')).toBe('/swagger-ui.html');
-    expect(apiDocs?.getAttribute('target')).toBe('_blank');
-    expect(apiDocs?.getAttribute('rel')).toBe('noopener');
+    expect(panel?.querySelector('a[mat-menu-item]')).toBeNull();
     const about = Array.from(panel?.querySelectorAll('button') ?? []).find((item) => item.textContent?.includes('About'));
     about?.click();
     fixture.detectChanges();

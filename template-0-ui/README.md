@@ -5,7 +5,7 @@ adjustable brightness, Cognito sign-in and registration, account profile flows,
 and a technology dashboard. The signed-in toolbar uses the theme surface color with primary-colored text and icons,
 over a decorative inline SVG pixel mosaic (`src/app/theme/toolbar-background.ts`)
 filled with the theme's primary and secondary colors, so it follows light/dark mode and brightness. The footer
-displays the account API's health, polling `/actuator/health` every 30 seconds.
+displays the account API's health, polling `/actuator/health` every 5 minutes.
 The dashboard cards explain the roles of the included technologies and are
 grouped into Front-end, Back-end, Cloud, and Tools tabs, also reachable from the side menu.
 The Material 3 palette is generated from primary `#26A1D5` with secondary `#26D5B2`

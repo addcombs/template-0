@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
-import { APP_NAME } from '../app-name';
+import { APP_DISPLAY_NAME } from '../app-name';
 
 @Component({
   selector: 'app-about-dialog',
@@ -22,5 +22,5 @@ import { APP_NAME } from '../app-name';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AboutDialogComponent {
-  protected readonly appName = APP_NAME;
+  protected readonly appName = APP_DISPLAY_NAME;
 }

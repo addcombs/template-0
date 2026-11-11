@@ -42,7 +42,7 @@ export interface TechnologyGroup {
   selector: 'app-root',
   imports: [MatButtonModule, MatCardModule, MatIconModule, MatListModule, MatMenuModule, MatSidenavModule, MatTabsModule, MatToolbarModule, MatTooltipModule, RegistrationComponent, ToolbarBackgroundComponent],
   templateUrl: './app.html',
-  styleUrls: ['./app.scss', './brightness-control.scss'],
+  styleUrls: ['./app.scss', './brightness-control.scss', './toolbar.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {

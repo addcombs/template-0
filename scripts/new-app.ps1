@@ -71,6 +71,8 @@ $pairs = @(
   @($app, $Name),
   @(($app -replace '[^A-Za-z0-9]', '').ToLowerInvariant(), ($Name -replace '[^A-Za-z0-9]', '').ToLowerInvariant())
 )
+# A display name set in project.json gives way to one made from the new app's name.
+if ($project.displayName) { $pairs = ,@($project.displayName, (DisplayName $Name)) + $pairs }
 foreach ($p in $pairs) { if (-not $renames.ContainsKey($p[0])) { $renames[$p[0]] = $p[1] } }
 $colours = New-Object 'System.Collections.Generic.Dictionary[string,string]' 
 if ($Primary -ne $project.theme.primary.ToUpperInvariant()) { $colours[$project.theme.primary.ToUpperInvariant()] = $Primary }

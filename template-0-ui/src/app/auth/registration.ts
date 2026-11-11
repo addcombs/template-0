@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { confirmSignUp, resendSignUpCode, signUp } from 'aws-amplify/auth';
-import { APP_NAME } from '../main/app-name';
+import { APP_DISPLAY_NAME } from '../main/app-name';
 
 type RegistrationStep = 'register' | 'confirm' | 'complete';
 
@@ -18,7 +18,7 @@ type RegistrationStep = 'register' | 'confirm' | 'complete';
 export class RegistrationComponent {
   @Output() readonly backToSignIn = new EventEmitter<void>();
 
-  protected readonly appName = APP_NAME;
+  protected readonly appName = APP_DISPLAY_NAME;
   protected readonly step = signal<RegistrationStep>('register');
   protected readonly busy = signal(false);
   protected readonly error = signal('');

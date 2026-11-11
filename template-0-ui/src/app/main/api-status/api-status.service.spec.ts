@@ -31,11 +31,14 @@ describe('ApiStatusService', () => {
     first.flush({ status: 'UP' });
     expect(service.status()).toBe('up');
 
-    vi.advanceTimersByTime(30_000);
+    // The next check comes five minutes later, not before.
+    vi.advanceTimersByTime(5 * 60_000 - 1);
+    http.expectNone('/actuator/health');
+    vi.advanceTimersByTime(1);
     http.expectOne('/actuator/health').flush({ status: 'DOWN' });
     expect(service.status()).toBe('down');
 
-    vi.advanceTimersByTime(30_000);
+    vi.advanceTimersByTime(5 * 60_000);
     http.expectOne('/actuator/health').flush({ status: 'UP' });
     expect(service.status()).toBe('up');
   });
@@ -47,11 +50,11 @@ describe('ApiStatusService', () => {
     expect(service.status()).toBe('down');
     expect(log).toHaveBeenCalled();
 
-    vi.advanceTimersByTime(30_000);
+    vi.advanceTimersByTime(5 * 60_000);
     http.expectOne('/actuator/health').flush({ status: 'UNKNOWN' });
     expect(service.status()).toBe('down');
 
-    vi.advanceTimersByTime(30_000);
+    vi.advanceTimersByTime(5 * 60_000);
     http.expectOne('/actuator/health').flush({ status: 'UP' });
     expect(service.status()).toBe('up');
   });

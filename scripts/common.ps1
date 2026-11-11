@@ -99,6 +99,7 @@ function Sync-UiConfig {
     '// which start-all and deploy-ui run before building. Edit those files, not this one.',
     'export const PROJECT_SETTINGS = {',
     "  appName: $(Ts $app),",
+    "  displayName: $(Ts $project.displayName),",
     "  developerName: $(Ts $project.developerName),",
     "  apiUrl: $(Ts "https://$apiDomain"),",
     '  auth: {',

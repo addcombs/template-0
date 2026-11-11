@@ -2,6 +2,7 @@
 // which start-all and deploy-ui run before building. Edit those files, not this one.
 export const PROJECT_SETTINGS = {
   appName: 'template-0',
+  displayName: '',
   developerName: 'Adam Combs',
   apiUrl: 'https://api.template-0.acombs-dev.com',
   auth: {

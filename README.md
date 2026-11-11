@@ -6,7 +6,8 @@ https://template-0.acombs-dev.com and https://api.template-0.acombs-dev.com. See
 README for details.
 
 `project.json` holds the only per-app settings: name, AWS profile and region, domain, Cognito
-domain prefix and theme colours. The PowerShell scripts in `scripts\` derive every AWS resource
+domain prefix and theme colours, plus an optional `displayName` for the toolbar, page title, welcome
+and About (otherwise made from the name: template-0 shows as Template 0). The PowerShell scripts in `scripts\` derive every AWS resource
 name from it. Their logs go to `logs\` and the IDs AWS assigns to `state\` (both git-ignored).
 
 ## Create a new app
