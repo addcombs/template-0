@@ -188,8 +188,10 @@ jobs:
           $settings = Get-Content template-0-ui/src/app/project.settings.ts -Raw
           $pool = [regex]::Match($settings, "userPoolId: '([^']+)'").Groups[1].Value
           $client = [regex]::Match($settings, "userPoolClientId: '([^']+)'").Groups[1].Value
-          # The app's logo above the sign-in form, in light and dark mode.
-          $logo = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes('template-0-ui/public/logos/logo.svg'))
+          # The app's logo above the sign-in form, in light and dark mode. Cognito refuses an SVG whose
+          # root has role or aria-label, so those are dropped from the uploaded copy.
+          $svg = [System.IO.File]::ReadAllText("$PWD/template-0-ui/public/logos/logo.svg") -replace '\s(role|aria-label)="[^"]*"', ''
+          $logo = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($svg))
           $assets = Join-Path $env:RUNNER_TEMP 'managed-login-assets.json'
           [System.IO.File]::WriteAllText($assets, (ConvertTo-Json -Compress @(
             @{ Category = 'FORM_LOGO'; ColorMode = 'LIGHT'; Extension = 'SVG'; Bytes = $logo },
