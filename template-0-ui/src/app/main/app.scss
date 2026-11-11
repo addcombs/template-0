@@ -34,7 +34,11 @@ mat-sidenav {
   box-shadow: var(--mat-sys-level3);
 }
 
+// The menu items sit 8 px apart.
 mat-sidenav mat-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   padding: 12px;
 }
 
