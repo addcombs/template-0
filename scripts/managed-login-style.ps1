@@ -2,12 +2,12 @@
 # {primary-40} or {secondary-90}, from the UI's Material palettes, so the Cognito sign-in page
 # matches the app. The UI deploy (.github/workflows/ci.yml, PowerShell 7 on Linux) dot-sources it
 # and applies the result, so it needs nothing else.
-function Get-ManagedLoginStyle([string]$ThemeFile, [string]$SettingsFile, [string]$Primary, [string]$Secondary) {
+function Get-ManagedLoginStyle([string]$ThemeFile, [string]$SettingsFile, [string]$Primary) {
   $theme = Get-Content $ThemeFile -Raw
-  # The palettes must come from the colours in project.json, or the sign-in page would get old ones.
-  $source = [regex]::Match($theme, 'generated from primary: (#\w+), secondary: (#\w+)')
-  if ($source.Groups[1].Value -ne $Primary -or $source.Groups[2].Value -ne $Secondary) {
-    throw "the theme palettes are not from project.json's colours. Run scripts\start-all.ps1 to regenerate them."
+  # The palettes must come from the colour in project.json, or the sign-in page would get old ones.
+  $source = [regex]::Match($theme, '(?m)generated from primary: (#\w+)\s*$')
+  if ($source.Groups[1].Value -ne $Primary) {
+    throw "the theme palettes are not from project.json's colour. Run scripts\start-all.ps1 to regenerate them."
   }
   # Reads each palette block, e.g. `primary: ( 40: #00668a, ... )`, into palette-tone -> rrggbb.
   $tones = @{}

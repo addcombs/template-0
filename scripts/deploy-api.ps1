@@ -35,7 +35,7 @@ if (-not (Test-Path $envFile)) { Fail ".env not found in $app-api." }
 # which makes the disk-space health check report DOWN; /tmp is Lambda's writable scratch space.
 # CORS_ALLOWED_ORIGINS: the UI at https://<domain> calls the API at https://api.<domain>.
 # DATABASE_SCHEMA: the app's own schema in the shared database (see common.ps1).
-# COGNITO_*: the app's user pool, from state\cognito-pool.json; .env supplies only the database login.
+# COGNITO_*: the app's user pool, from config\cognito-pool.json; .env supplies only the database login.
 $ids = Get-CognitoIds
 $vars = [ordered]@{ MAIN_CLASS = $mainClass; SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE = '2'; MANAGEMENT_HEALTH_DISKSPACE_PATH = '/tmp'
   CORS_ALLOWED_ORIGINS = "https://$domain"; DATABASE_SCHEMA = $dbSchema

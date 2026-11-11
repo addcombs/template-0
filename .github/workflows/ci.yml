@@ -35,13 +35,13 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: template-0-ui/package-lock.json
-      # start-all regenerates the palettes when project.json's colors change; fail if that was skipped.
+      # start-all regenerates the palettes when project.json's color changes; fail if that was skipped.
       - name: Check theme palettes match project.json
         run: |
           primary=$(jq -r .theme.primary ../project.json)
-          secondary=$(jq -r .theme.secondary ../project.json)
-          grep -qF "generated from primary: $primary, secondary: $secondary" src/app/theme/generated_theme-colors.scss \
-            || { echo "::error::Theme palettes are not from project.json's colors. Run scripts\\start-all.ps1 to regenerate them."; exit 1; }
+          tr -d '\r' < src/app/theme/generated_theme-colors.scss \
+            | grep -qxF "// Note: Color palettes are generated from primary: $primary" \
+            || { echo "::error::Theme palettes are not from project.json's color. Run scripts\\start-all.ps1 to regenerate them."; exit 1; }
       # package.json pins npm 11 (packageManager); Node 22's npm 10 rejects the lock file.
       - run: npm install -g npm@11.6.1
       - run: npm ci --no-audit --no-fund
@@ -182,7 +182,7 @@ jobs:
           . ./scripts/managed-login-style.ps1
           $project = Get-Content project.json -Raw | ConvertFrom-Json
           $style = Get-ManagedLoginStyle template-0-ui/src/app/theme/generated_theme-colors.scss config/managed-login-branding.json `
-            $project.theme.primary $project.theme.secondary
+            $project.theme.primary
           $filled = Join-Path $env:RUNNER_TEMP 'managed-login-branding.json'
           [System.IO.File]::WriteAllText($filled, $style)
           $settings = Get-Content template-0-ui/src/app/project.settings.ts -Raw

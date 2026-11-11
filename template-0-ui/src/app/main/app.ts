@@ -24,7 +24,7 @@ import { AboutDialogComponent } from './about/about-dialog';
 import { ToolbarBackgroundComponent } from '../theme/toolbar-background';
 
 /** A dashboard card: shows `logo` (a local SVG in public/logos) or, when no licensed logo is bundled, a Material `icon`. */
-export interface Technology {
+interface Technology {
   name: string;
   logo?: string;
   icon?: string;
@@ -32,7 +32,7 @@ export interface Technology {
   usage: string;
 }
 
-export interface TechnologyGroup {
+interface TechnologyGroup {
   label: string;
   icon: string;
   technologies: Technology[];
@@ -77,7 +77,7 @@ export class App {
       icon: 'web',
       technologies: [
         { name: 'Angular', logo: 'logos/angular.svg', description: 'Front-end framework', usage: 'Builds the app screens and keeps the navigation, account details, and API status in sync with application state.' },
-        { name: 'Angular Material', logo: 'logos/angularmaterial.svg', description: 'Material Design 3 components and theming', usage: 'Provides the toolbar, navigation drawer, dialogs, cards, buttons, and theme-aware controls; its theme-color schematic generated the #26A1D5 primary and #26D5B2 secondary palettes.' },
+        { name: 'Angular Material', logo: 'logos/angularmaterial.svg', description: 'Material Design 3 components and theming', usage: 'Provides the toolbar, navigation drawer, dialogs, cards, buttons, and theme-aware controls; its theme-color schematic generated every palette from the single #26A1D5 primary.' },
         { name: 'Angular CDK', logo: 'logos/angularmaterial.svg', description: 'Component Dev Kit behavior primitives', usage: 'Watches screen-size breakpoints so the navigation drawer docks on wide screens and overlays on narrow ones, and auto-sizes the read-only Email field so long addresses wrap.' },
         { name: 'Angular Reactive Forms', logo: 'logos/angular.svg', description: 'Typed, validated form state', usage: 'Powers the registration and account details forms, validating required fields and lengths before submitting.' },
         { name: 'Angular Signals', logo: 'logos/angular.svg', description: 'Reactive application state', usage: 'Hold the sign-in status, account details, theme brightness, selected tab, and drawer state, so the screens update automatically whenever any of them change.' },

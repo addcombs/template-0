@@ -8,7 +8,8 @@ README for details.
 `project.json` holds the only per-app settings: name, AWS profile and region, domain, Cognito
 domain prefix and theme colours, plus an optional `displayName` for the toolbar, page title, welcome
 and About (otherwise made from the name: template-0 shows as Template 0). The PowerShell scripts in `scripts\` derive every AWS resource
-name from it. Their logs go to `logs\` and the IDs AWS assigns to `state\` (both git-ignored).
+name from it. Their logs go to `logs\` (git-ignored), and the Cognito IDs AWS assigns to
+`config\cognito-pool.json` (git-ignored).
 
 GitHub Actions (`.github/workflows/ci.yml`) builds and tests the UI and the API on every push to
 `main` and every pull request, and checks the theme palettes match `project.json`. Pushes to `main`

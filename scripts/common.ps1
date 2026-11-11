@@ -3,17 +3,16 @@
 # Loads ..\project.json (the only per-app settings) and derives every AWS resource name from the app
 # name, so a new app needs only its own project.json. Folders under the project root:
 #   logs\    run logs and generated request files (git-ignored)
-#   state\   IDs AWS assigned, e.g. cognito-pool.json (git-ignored)
-#   config\  hand-maintained inputs, e.g. managed-login-branding.json
+#   config\  hand-maintained inputs, e.g. managed-login-branding.json, and cognito-pool.json, the
+#            Cognito IDs AWS assigned (written by create-cognito-pool.ps1, git-ignored)
 # Native tools write normal output to stderr; Windows PowerShell 5 would treat that as a terminating
 # error under 'Stop', so failures are checked via exit codes.
 param([string]$LogName, [string]$Title, [switch]$AppendLog)
 $ErrorActionPreference = 'Continue'
 $root   = Split-Path -Parent $PSScriptRoot
 $logs   = Join-Path $root 'logs'
-$state  = Join-Path $root 'state'
 $config = Join-Path $root 'config'
-New-Item -ItemType Directory -Force $logs, $state | Out-Null
+New-Item -ItemType Directory -Force $logs | Out-Null
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 
 $project     = Get-Content (Join-Path $root 'project.json') -Raw | ConvertFrom-Json
@@ -85,20 +84,20 @@ function Invoke-Npm { if ($npmCli) { & $nodeExe $npmCli @args } else { & npm.cmd
 # The same, as a command line for a new PowerShell window.
 $npmCommand = if ($npmCli) { "& '$nodeExe' '$npmCli'" } else { '& npm.cmd' }
 
-$cognitoStateFile = Join-Path $state 'cognito-pool.json'
+$cognitoPoolFile = Join-Path $config 'cognito-pool.json'
 function Get-CognitoIds {
-  if (-not (Test-Path $cognitoStateFile)) { Fail "state\cognito-pool.json not found. Run scripts\create-cognito-pool.ps1 first." }
-  return Get-Content $cognitoStateFile -Raw | ConvertFrom-Json
+  if (-not (Test-Path $cognitoPoolFile)) { Fail "config\cognito-pool.json not found. Run scripts\create-cognito-pool.ps1 first." }
+  return Get-Content $cognitoPoolFile -Raw | ConvertFrom-Json
 }
 
-# Writes the UI's src\app\project.settings.ts from project.json and state\cognito-pool.json. Without
-# the Cognito state the IDs are left empty and the UI reports sign-in as not configured.
+# Writes the UI's src\app\project.settings.ts from project.json and config\cognito-pool.json. Without
+# that file the IDs are left empty and the UI reports sign-in as not configured.
 function Sync-UiConfig {
-  $ids = if (Test-Path $cognitoStateFile) { Get-Content $cognitoStateFile -Raw | ConvertFrom-Json } else { $null }
+  $ids = if (Test-Path $cognitoPoolFile) { Get-Content $cognitoPoolFile -Raw | ConvertFrom-Json } else { $null }
   function Ts($s) { "'" + ("$s" -replace '\\', '\\' -replace "'", "\'") + "'" }
   $urls = "[$(Ts 'http://localhost:4200/'), $(Ts "https://$domain/")]"
   $text = @(
-    "// Generated from project.json and state\cognito-pool.json by Sync-UiConfig in scripts\common.ps1,",
+    "// Generated from project.json and config\cognito-pool.json by Sync-UiConfig in scripts\common.ps1,",
     '// which start-all runs before building. Edit those files, not this one.',
     'export const PROJECT_SETTINGS = {',
     "  appName: $(Ts $app),",
@@ -118,5 +117,5 @@ function Sync-UiConfig {
   $file = Join-Path $uiDir 'src\app\project.settings.ts'
   $current = if (Test-Path $file) { [System.IO.File]::ReadAllText($file) } else { $null }
   if ($current -ne $text) { Write-Utf8 $file $text; Step 'UI settings written: src\app\project.settings.ts' }
-  if (-not $ids) { Step 'note: state\cognito-pool.json not found; the UI will report sign-in as not configured' }
+  if (-not $ids) { Step 'note: config\cognito-pool.json not found; the UI will report sign-in as not configured' }
 }

@@ -25,7 +25,7 @@ Nothing is applied automatically: the application cannot start against an out-of
 
 ## Configuration
 
-All settings are supplied through environment variables; nothing is stored in source. All six are required to start the application. `..\scripts\start-all.ps1` and `deploy-api` set `DATABASE_SCHEMA` from `..\project.json` and the Cognito settings from `..\state\cognito-pool.json`; the database login comes from `.env` (for runs outside those scripts, e.g. from the IDE, put all six in `.env`).
+All settings are supplied through environment variables; nothing is stored in source. All six are required to start the application. `..\scripts\start-all.ps1` and `deploy-api` set `DATABASE_SCHEMA` from `..\project.json` and the Cognito settings from `..\config\cognito-pool.json`; the database login comes from `.env` (for runs outside those scripts, e.g. from the IDE, put all six in `.env`).
 
 | Variable | Purpose |
 |---|---|

@@ -51,7 +51,7 @@ html {
   @include mat.theme((
     color: (
       primary: $brand-palette,
-      tertiary: mat.$blue-palette,
+      tertiary: generated.$tertiary-palette,
       theme-type: light,
     ),
     typography: (plain-family: (Lato, sans-serif)),
@@ -64,7 +64,7 @@ html.dark-theme {
   @include mat.theme((
     color: (
       primary: $brand-palette,
-      tertiary: mat.$blue-palette,
+      tertiary: generated.$tertiary-palette,
       theme-type: dark,
     ),
     typography: (plain-family: (Lato, sans-serif)),

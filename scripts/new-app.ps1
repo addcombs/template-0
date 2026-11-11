@@ -11,9 +11,9 @@
 # repository with one commit (skip with -NoGit). Prompts for the name when not given.
 # Log: logs\new-app.log
 #   scripts\new-app.ps1 -Name project-1 [-HostName project-1.acombs-dev.com] [-Primary '#RRGGBB']
-#     [-Secondary '#RRGGBB'] [-CognitoPrefix project-1-acombs] [-Destination <folder>] [-NoGit]
+#     [-CognitoPrefix project-1-acombs] [-Destination <folder>] [-NoGit]
 param(
-  [string]$Name, [string]$HostName, [string]$Primary, [string]$Secondary,
+  [string]$Name, [string]$HostName, [string]$Primary,
   [string]$CognitoPrefix, [string]$Destination, [switch]$NoGit
 )
 . "$PSScriptRoot\common.ps1" -LogName 'new-app.log' -Title 'new app'
@@ -43,9 +43,8 @@ if ($Name -eq $app) { Fail "the new app needs a name other than $app." }
 if (-not $HostName) { $HostName = "$Name.$apex" }
 if ($HostName -ne $apex -and $HostName -notmatch "\.$([regex]::Escape($apex))$") { Fail "host $HostName is neither $apex nor under it (project.json domain.apex)." }
 if (-not $Primary) { $Primary = $project.theme.primary }
-if (-not $Secondary) { $Secondary = $project.theme.secondary }
-foreach ($c in @($Primary, $Secondary)) { if ($c -notmatch '^#[0-9A-Fa-f]{6}$') { Fail "colour ${c}: use #RRGGBB." } }
-$Primary = $Primary.ToUpperInvariant(); $Secondary = $Secondary.ToUpperInvariant()
+if ($Primary -notmatch '^#[0-9A-Fa-f]{6}$') { Fail "colour ${Primary}: use #RRGGBB." }
+$Primary = $Primary.ToUpperInvariant()
 if (-not $CognitoPrefix) {
   $CognitoPrefix = $project.cognito.domainPrefix.Replace($app, $Name)
   if ($CognitoPrefix -eq $project.cognito.domainPrefix) { $CognitoPrefix = "$Name-$CognitoPrefix" }
@@ -76,9 +75,8 @@ if ($project.displayName) { $pairs = ,@($project.displayName, (DisplayName $Name
 foreach ($p in $pairs) { if (-not $renames.ContainsKey($p[0])) { $renames[$p[0]] = $p[1] } }
 $colours = New-Object 'System.Collections.Generic.Dictionary[string,string]' 
 if ($Primary -ne $project.theme.primary.ToUpperInvariant()) { $colours[$project.theme.primary.ToUpperInvariant()] = $Primary }
-if ($Secondary -ne $project.theme.secondary.ToUpperInvariant()) { $colours[$project.theme.secondary.ToUpperInvariant()] = $Secondary }
 Step "new app $Name at $Destination"
-Step "host $HostName, Cognito prefix $CognitoPrefix, schema $newSchema, package $newPackage, colours $Primary / $Secondary"
+Step "host $HostName, Cognito prefix $CognitoPrefix, schema $newSchema, package $newPackage, colour $Primary"
 
 # --- copy and rename ---
 $files = & git -C $root -c core.quotepath=off ls-files --cached --others --exclude-standard
@@ -112,14 +110,14 @@ Step "copied $copied files ($changed with renamed text)"
 # project.json was renamed like the other files; check it says what was asked.
 $newProject = Get-Content (Join-Path $Destination 'project.json') -Raw | ConvertFrom-Json
 if ($newProject.name -ne $Name -or $newProject.domain.host -ne $HostName -or $newProject.cognito.domainPrefix -ne $CognitoPrefix -or
-    $newProject.theme.primary -ne $Primary -or $newProject.theme.secondary -ne $Secondary) {
+    $newProject.theme.primary -ne $Primary) {
   Fail "project.json in $Destination did not come out as expected; check it by hand."
 }
 if ($newProject.database.schema) { Step "note: project.json sets database.schema $($newProject.database.schema); remove it to use $newSchema" }
 Step 'project.json written'
 
 # The new .env keeps only the shared database login (and port); the app's schema is its own, and
-# its Cognito IDs come from its own state\cognito-pool.json once create-cognito-pool has run.
+# its Cognito IDs come from its own config\cognito-pool.json once create-cognito-pool has run.
 $envFile = Join-Path $apiDir '.env'
 if (Test-Path $envFile) {
   $keep = Get-Content $envFile | Where-Object { $_ -match '^\s*(DATABASE_URL|DATABASE_USERNAME|DATABASE_PASSWORD|SERVER_PORT)\s*=' }

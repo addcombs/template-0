@@ -5,7 +5,7 @@ import { PROJECT_SETTINGS } from '../project.settings';
  * The values come from project.settings.ts, generated from the user pool and public app client
  * the setup scripts created. Never put a client secret here.
  */
-export interface CognitoAuthConfig {
+interface CognitoAuthConfig {
   userPoolId: string;
   userPoolClientId: string;
   domain: string;

@@ -10,7 +10,7 @@
 #    config\managed-login-branding.json, whose theme colours are palette references such as
 #    {primary-40}; each deploy from main then applies the app's colours (.github/workflows/ci.yml)
 # Safe to re-run: reuses the pool, client, domain and style if they exist.
-# Writes the IDs to state\cognito-pool.json. Log: logs\cognito-pool.log
+# Writes the IDs to config\cognito-pool.json. Log: logs\cognito-pool.log
 . "$PSScriptRoot\common.ps1" -LogName 'cognito-pool.log' -Title 'Cognito pool'
 $poolName = $names.UserPool
 $clientName = $names.UserClient
@@ -90,8 +90,8 @@ $result = [ordered]@{
   domain = "$signInDomain.auth.$awsRegion.amazoncognito.com"
   issuer = "https://cognito-idp.$awsRegion.amazonaws.com/$poolId"
 }
-Write-Json $cognitoStateFile $result | Out-Null
+Write-Json $cognitoPoolFile $result | Out-Null
 Step "issuer: $($result.issuer)"
 Step "domain: $($result.domain)"
-Step 'DONE. IDs saved to state\cognito-pool.json (deploy-api and start-all pass them to the API)'
+Step 'DONE. IDs saved to config\cognito-pool.json (deploy-api and start-all pass them to the API)'
 Read-Host 'Press Enter to close'

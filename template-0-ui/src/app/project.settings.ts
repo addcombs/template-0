@@ -1,4 +1,4 @@
-// Generated from project.json and state\cognito-pool.json by Sync-UiConfig in scripts\common.ps1,
+// Generated from project.json and config\cognito-pool.json by Sync-UiConfig in scripts\common.ps1,
 // which start-all runs before building. Edit those files, not this one.
 export const PROJECT_SETTINGS = {
   appName: 'template-0',

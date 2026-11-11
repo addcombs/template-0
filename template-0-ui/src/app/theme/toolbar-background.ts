@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
-export interface PixelLayer {
+interface PixelLayer {
   tone: 'primary' | 'secondary';
   opacity: number;
   d: string;
