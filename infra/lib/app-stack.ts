@@ -8,7 +8,7 @@
 //
 // importOnly (cdk import of an app first set up by the old scripts) leaves out what cannot be
 // imported, so the first pass adopts only existing resources; a normal deploy then adds the rest.
-import { CfnOutput, CfnParameter, Duration, Fn, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import { Annotations, CfnOutput, CfnParameter, Duration, Fn, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
@@ -124,7 +124,14 @@ export class AppStack extends Stack {
 
     // --- API ---
     // The database login comes from the API's .env as NoEcho parameters, so it is in no template.
+    // cdk import takes no parameters; importing leaves the function's settings as they are, and the
+    // deploy straight after sets them.
     const secret = (name: string) => new CfnParameter(this, name, { type: 'String', noEcho: true }).valueAsString;
+    const dbLogin: Record<string, string> = importOnly ? {} : {
+      DATABASE_URL: secret('DatabaseUrl'),
+      DATABASE_USERNAME: secret('DatabaseUsername'),
+      DATABASE_PASSWORD: secret('DatabasePassword'),
+    };
     const apiRole = keep(new iam.Role(this, 'ApiRole', {
       roleName: `${app}-api-lambda`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
@@ -152,14 +159,14 @@ export class AppStack extends Stack {
         DATABASE_SCHEMA: props.dbSchema,
         COGNITO_ISSUER: pool.userPoolProviderUrl,
         COGNITO_CLIENT_ID: client.userPoolClientId,
-        DATABASE_URL: secret('DatabaseUrl'),
-        DATABASE_USERNAME: secret('DatabaseUsername'),
-        DATABASE_PASSWORD: secret('DatabasePassword'),
+        ...dbLogin,
       },
     }));
+    // CI publishes the versions SnapStart snapshots (see the top of this file).
+    Annotations.of(api).acknowledgeWarning('@aws-cdk/aws-lambda:snapStartRequirePublish', 'CI publishes each version');
     const live = keep(new lambda.CfnAlias(this, 'Live', { functionName: api.functionName, name: 'live', functionVersion: '$LATEST' }));
     const url = keep(new lambda.CfnUrl(this, 'LiveUrl', { targetFunctionArn: api.functionArn, qualifier: 'live', authType: 'NONE' }));
-    url.addDependency(live);
+    url.addResourceDependency(live);
 
     // --- GitHub Actions deploy role: exactly what .github/workflows/ci.yml calls ---
     const providerHost = 'token.actions.githubusercontent.com';
@@ -182,10 +189,10 @@ export class AppStack extends Stack {
     // Function URLs with no auth need both permissions.
     new lambda.CfnPermission(this, 'LiveUrlInvokeUrl', {
       functionName: `${api.functionArn}:live`, action: 'lambda:InvokeFunctionUrl', principal: '*', functionUrlAuthType: 'NONE',
-    }).addDependency(live);
+    }).addResourceDependency(live);
     new lambda.CfnPermission(this, 'LiveUrlInvoke', {
       functionName: `${api.functionArn}:live`, action: 'lambda:InvokeFunction', principal: '*', invokedViaFunctionUrl: true,
-    }).addDependency(live);
+    }).addResourceDependency(live);
 
     const apiBehavior: cloudfront.BehaviorOptions = {
       // https://<id>.lambda-url.<region>.on.aws/ -> its host name
