@@ -159,6 +159,9 @@ if ($ImportExisting -and $null -eq (Invoke-AwsCli @('cloudformation','describe-s
     Invoke-AwsCli @('route53','change-resource-record-sets','--hosted-zone-id',$zoneId,'--change-batch',"file://$batch") | Out-Null
     Step "old DNS records for $domain removed ($(($old.Type) -join ', '))"
   }
+  # The stack writes the UI bucket's policy itself (for the new distribution); S3 allows only one.
+  Invoke-AwsCli @('s3api','delete-bucket-policy','--bucket',"$app-ui-$account") | Out-Null
+  Step "old policy on $app-ui-$account removed (it let only the old distribution read)"
 }
 Step 'deploying the stack (a new CloudFront distribution takes 5-15 minutes)...'
 $outputs = Join-Path $logs 'cdk-outputs.json'
