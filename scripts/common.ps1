@@ -122,6 +122,28 @@ function Get-CognitoIds {
   return Get-Content $cognitoPoolFile -Raw | ConvertFrom-Json
 }
 
+# Regenerates the UI's theme palettes (src\app\theme\generated_theme-colors.scss, which CI checks)
+# when project.json's colour differs from the one they came from; needs the UI's node_modules. The
+# whole line must match, as palettes from an older primary-and-secondary pair start the same way.
+# Throws on failure. Log: logs\ui-theme.log
+$themeFile = Join-Path $uiDir 'src\app\theme\generated_theme-colors.scss'
+function Sync-Theme {
+  $primary = $project.theme.primary
+  if (-not (Select-String -Path $themeFile -Pattern "generated from primary: $([regex]::Escape($primary))\s*$" -Quiet)) {
+    # The schematic writes <directory>_theme-colors.scss, i.e. src/app/theme/_generated_theme-colors.scss.
+    Push-Location $uiDir
+    & (Join-Path $uiDir 'node_modules\.bin\ng.cmd') generate '@angular/material:theme-color' "--primary-color=$primary" `
+      '--directory=src/app/theme/_generated' '--is-scss' '--interactive=false' *>&1 | ForEach-Object { "$_" } | Set-Content (Join-Path $logs 'ui-theme.log')
+    $code = $LASTEXITCODE
+    Pop-Location
+    $gen = Join-Path $uiDir 'src\app\theme\_generated_theme-colors.scss'
+    if ($code -ne 0 -or -not (Test-Path $gen)) { throw "theme generator failed (exit $code); see logs\ui-theme.log" }
+    Copy-Item $gen $themeFile -Force -ErrorAction Stop
+    Remove-Item $gen -Force
+    Step "theme: generated from primary $primary"
+  }
+}
+
 # Writes the UI's src\app\project.settings.ts from project.json and config\cognito-pool.json. Without
 # that file the IDs are left empty and the UI reports sign-in as not configured.
 function Sync-UiConfig {

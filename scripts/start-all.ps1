@@ -4,7 +4,6 @@
 $env:NG_CLI_ANALYTICS = 'false'
 $ui   = $uiDir
 $api  = $apiDir
-$primary = $project.theme.primary
 function Run($name, $dir, $exe, [string[]]$argv) {
   Step "START $name"
   Push-Location $dir
@@ -39,19 +38,7 @@ try {
   Step "node: $(& node -v), npm $(Invoke-Npm @('-v'))"
   # --- UI setup ---
   if (-not (Test-Path (Join-Path $ui 'node_modules\.bin\ng.cmd'))) { Run 'ui-npm-ci' $ui $npm @('ci','--no-audit','--no-fund') }
-  $theme = Join-Path $ui 'src\app\theme\generated_theme-colors.scss'
-  # Regenerated when project.json's colour differs from the one the palettes came from. The whole
-  # line must match, as palettes from an older primary-and-secondary pair start the same way.
-  if (-not (Select-String -Path $theme -Pattern "generated from primary: $([regex]::Escape($primary))\s*$" -Quiet)) {
-    # The schematic writes <directory>_theme-colors.scss, i.e. src/app/theme/_generated_theme-colors.scss.
-    Run 'ui-theme' $ui (Join-Path $ui 'node_modules\.bin\ng.cmd') @('generate','@angular/material:theme-color',"--primary-color=$primary",'--directory=src/app/theme/_generated','--is-scss','--interactive=false')
-    $gen = Join-Path $ui 'src\app\theme\_generated_theme-colors.scss'
-    if (-not (Test-Path $gen)) { throw "theme generator produced no file at $gen" }
-    Copy-Item $gen $theme -Force -ErrorAction Stop
-    Step "theme: generated from primary $primary"
-  }
-  $stray = Join-Path $ui 'src\app\theme\_generated_theme-colors.scss'
-  if (Test-Path $stray) { Remove-Item $stray -Force }
+  Sync-Theme
   Sync-UiConfig
   Run 'ui-build' $ui $npm @('run','build')
   Run 'ui-test'  $ui $npm @('test','--','--watch=false')

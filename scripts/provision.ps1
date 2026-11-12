@@ -100,11 +100,20 @@ if ($code -ne 0) { Fail "cdk deploy failed (exit $code); see logs\cdk-deploy.log
 $out = (Get-Content $outputs -Raw | ConvertFrom-Json).$app
 Step "stack deployed: distribution $($out.DistributionId), user pool $($out.UserPoolId)"
 
-# --- 4. Cognito IDs, UI settings and the sign-in page's style ---
+# --- 4. Cognito IDs, UI settings, theme palettes and the sign-in page's style ---
 Write-Json $cognitoPoolFile ([ordered]@{
   userPoolId = $out.UserPoolId; userPoolClientId = $out.UserPoolClientId; domain = $out.SignInDomain; issuer = $out.Issuer
 }) | Out-Null
 Sync-UiConfig
+if (-not (Test-Path (Join-Path $uiDir 'node_modules\.bin\ng.cmd'))) {
+  Step 'installing the UI''s packages (npm ci)...'
+  Push-Location $uiDir
+  Invoke-Npm @('ci', '--no-audit', '--no-fund') *>&1 | Out-Null
+  $code = $LASTEXITCODE
+  Pop-Location
+  if ($code -ne 0) { Fail "npm ci failed in $app-ui." }
+}
+try { Sync-Theme } catch { Fail $_.Exception.Message }
 # CI applies the theme colors to this style on each deploy; Cognito's default starts it off.
 $brandingId = Invoke-AwsCli @('cognito-idp','describe-managed-login-branding-by-client','--user-pool-id',$out.UserPoolId,'--client-id',$out.UserPoolClientId,
   '--query','ManagedLoginBranding.ManagedLoginBrandingId','--output','text') -AllowFail -Quiet
@@ -124,12 +133,12 @@ if ($SkipDeploy) { Step "DONE (no deploy). https://$domain/ serves the UI after 
 & $gh variable set AWS_DEPLOY_ROLE_ARN --repo $repo --body $out.DeployRoleArn
 if ($LASTEXITCODE -ne 0) { Fail 'could not set the AWS_DEPLOY_ROLE_ARN variable.' }
 Step "AWS_DEPLOY_ROLE_ARN = $($out.DeployRoleArn)"
-# A push of the new settings deploys by itself; otherwise start the workflow.
-$settings = "$app-ui/src/app/project.settings.ts"
-& git -C $root add -- $settings
-& git -C $root diff --cached --quiet -- $settings
+# A push of new settings or palettes deploys by itself; otherwise start the workflow.
+$generated = @("$app-ui/src/app/project.settings.ts", "$app-ui/src/app/theme/generated_theme-colors.scss")
+& git -C $root add -- @generated
+& git -C $root diff --cached --quiet -- @generated
 if ($LASTEXITCODE -ne 0) {
-  & git -C $root commit -q -m 'Point the UI at the provisioned sign-in' -- $settings
+  & git -C $root commit -q -m 'Point the UI at the provisioned sign-in and theme' -- @generated
   & git -C $root push -q origin HEAD:main
   if ($LASTEXITCODE -ne 0) { Fail 'git push failed.' }
   Step 'UI settings committed and pushed; the push deploys'
