@@ -54,6 +54,11 @@ function Write-Json($path, $obj) { Write-Utf8 $path ($obj | ConvertTo-Json -Dept
 
 # The apex's DNS is hosted in Route 53; the CDK stack writes each app's alias records, and these
 # helpers the shared certificate's validation record.
+function Get-HostedZoneId {
+  $id = Invoke-AwsCli @('route53','list-hosted-zones-by-name','--dns-name',$apex,'--query',("HostedZones[?Name=='$apex.' && Config.PrivateZone==" + '`false`' + '].Id | [0]'),'--output','text')
+  if (-not $id -or $id -eq 'None') { Fail "No public Route 53 hosted zone for $apex." }
+  return $id -replace '^/hostedzone/', ''
+}
 # Creates or replaces Route 53 record sets (each a ResourceRecordSet hashtable) in the apex's zone
 # and waits until Route 53 serves them.
 function Set-DnsRecords([string]$Comment, [object[]]$RecordSets) {
