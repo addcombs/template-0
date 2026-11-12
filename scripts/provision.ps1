@@ -92,6 +92,15 @@ if ($null -eq (Invoke-AwsCli @('cloudformation','describe-stacks','--stack-name'
   Invoke-Npm @($cdk + @('bootstrap', "aws://$account/$awsRegion") + $cdkArgs) *>&1 | ForEach-Object { "$_" } | Set-Content $deployLog
   if ($LASTEXITCODE -ne 0) { Pop-Location; Fail 'cdk bootstrap failed; see logs\cdk-deploy.log' }
 }
+if ($ImportExisting) {
+  # A failed import leaves an empty stack behind (its resources are kept); clear it so this can retry.
+  $status = Invoke-AwsCli @('cloudformation','describe-stacks','--stack-name',$app,'--query','Stacks[0].StackStatus','--output','text') -AllowFail -Quiet
+  if ($status -in 'REVIEW_IN_PROGRESS', 'IMPORT_ROLLBACK_COMPLETE', 'ROLLBACK_COMPLETE') {
+    Invoke-AwsCli @('cloudformation','delete-stack','--stack-name',$app) | Out-Null
+    Invoke-AwsCli @('cloudformation','wait','stack-delete-complete','--stack-name',$app) | Out-Null
+    Step "empty $app stack from a failed import ($status) removed"
+  }
+}
 if ($ImportExisting -and $null -eq (Invoke-AwsCli @('cloudformation','describe-stacks','--stack-name',$app) -AllowFail -Quiet)) {
   # --- one-off: adopt what the old setup scripts made, then free the host for the new distribution ---
   $poolId = Invoke-AwsCli @('cognito-idp','list-user-pools','--max-results','60','--query',"UserPools[?Name=='$app-users'].Id | [0]",'--output','text')
