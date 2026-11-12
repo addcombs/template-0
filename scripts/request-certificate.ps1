@@ -1,11 +1,12 @@
 # Setup step 5 (first part): requests the free ACM certificates for the app's domain and its API
-# domain (api.<domain>) in us-east-1 (the only region CloudFront uses) with DNS validation, then
-# prints the CNAME records to add at the DNS provider. Re-run any time to see the certificates'
-# status; it never requests a duplicate.
+# domain (api.<domain>) in us-east-1 (the only region CloudFront uses) with DNS validation, writes
+# the validation CNAMEs to the Route 53 zone, and waits until both are issued. Safe to re-run: it
+# never requests a duplicate, and the CNAMEs stay so ACM can renew the certificates.
 # Log: logs\certificate.log
 . "$PSScriptRoot\common.ps1" -LogName 'certificate.log' -Title 'certificate'
 
-$allIssued = $true
+$pending = @()
+$records = @()
 foreach ($cert in @(@{ Domain = $domain; Token = $names.CertToken }, @{ Domain = $apiDomain; Token = $names.ApiCertToken })) {
   $certDomain = $cert.Domain
   # Reuse an existing certificate for the domain (pending or issued) instead of requesting another.
@@ -27,14 +28,18 @@ foreach ($cert in @(@{ Domain = $domain; Token = $names.CertToken }, @{ Domain =
   }
   if (-not $name) { Fail "ACM did not return a validation record for $certDomain yet; run this again in a minute." }
   Step "$certDomain status: $status"
-  if ($status -ne 'ISSUED') { $allIssued = $false }
-  $host_ = $name.TrimEnd('.') -replace "\.$([regex]::Escape($apex))$", ''
-  $target = $value.TrimEnd('.')
-  Step "Add this record at $($project.domain.dnsProvider) (Domains > $apex > DNS Settings > Custom Records):"
-  Step "  Type:      CNAME"
-  Step "  Host:      $host_"
-  Step "  Points to: $target"
+  if ($status -ne 'ISSUED') { $pending += @{ Domain = $certDomain; Arn = $arn } }
+  $records += [ordered]@{ Name = $name; Type = 'CNAME'; TTL = 300; ResourceRecords = @(@{ Value = $value }) }
 }
-if ($allIssued) { Step 'DONE. Both certificates are ISSUED and ready for CloudFront.' }
-else { Step 'DONE. After adding the records, run scripts\request-certificate.ps1 again in a few minutes to see ISSUED.' }
+Set-DnsRecords "$app certificate validation" $records
+
+# ACM checks the records every minute or so; issuing usually takes a few minutes.
+foreach ($cert in $pending) {
+  Step "waiting for $($cert.Domain) to be issued..."
+  Invoke-AwsCli @('acm','wait','certificate-validated','--certificate-arn',$cert.Arn) -Region $cloudFrontRegion -AllowFail | Out-Null
+  $status = Invoke-AwsCli @('acm','describe-certificate','--certificate-arn',$cert.Arn,'--query','Certificate.Status','--output','text') -Region $cloudFrontRegion
+  Step "$($cert.Domain) status: $status"
+  if ($status -ne 'ISSUED') { Fail "$($cert.Domain) is $status. Run scripts\request-certificate.ps1 again later." }
+}
+Step 'DONE. Both certificates are ISSUED and ready for CloudFront.'
 Read-Host 'Press Enter to close'

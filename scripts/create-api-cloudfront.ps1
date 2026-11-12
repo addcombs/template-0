@@ -3,6 +3,7 @@
 #  - every path -> the API (CachingDisabled + AllViewerExceptHostHeader, which forwards the
 #    Authorization header and the CORS request headers; the API answers CORS itself)
 #  - the ACM certificate for the API domain and the alias
+#  - alias A/AAAA records for the API domain in Route 53
 # Safe to re-run: reuses an existing distribution for the alias.
 # Log: logs\api-cloudfront.log
 . "$PSScriptRoot\common.ps1" -LogName 'api-cloudfront.log' -Title 'API CloudFront'
@@ -48,9 +49,6 @@ if ($existing -and $existing -ne 'None') {
 
 $status = Invoke-AwsCli @('cloudfront','get-distribution','--id',$distId,'--query','Distribution.Status','--output','text')
 Step "status: $status (InProgress -> Deployed takes about 5-15 minutes)"
-Step "Add this record at $($project.domain.dnsProvider) (Domains > $apex > DNS > Custom records):"
-Step '  Type: CNAME'
-Step "  Name: $apiSubdomain"
-Step "  Data: $distDomain"
+Set-CloudFrontAlias $apiDomain $distDomain
 Step "DONE. Distribution $distId at $distDomain; the API will answer at https://$apiDomain/actuator/health"
 Read-Host 'Press Enter to close'

@@ -4,6 +4,7 @@
 #  - default behavior -> S3 bucket (CachingOptimized)
 #  - the ACM certificate and the domain alias
 #  - a bucket policy allowing only this distribution to read the bucket
+#  - alias A/AAAA records for the domain in Route 53
 # Safe to re-run: reuses the access control and an existing distribution for the alias.
 # Log: logs\cloudfront.log
 . "$PSScriptRoot\common.ps1" -LogName 'cloudfront.log' -Title 'CloudFront'
@@ -65,13 +66,6 @@ Step "bucket policy set: only $distId can read $bucket"
 
 $status = Invoke-AwsCli @('cloudfront','get-distribution','--id',$distId,'--query','Distribution.Status','--output','text')
 Step "status: $status (InProgress -> Deployed takes about 5-15 minutes)"
-Step "Add this record at $($project.domain.dnsProvider) (Domains > $apex > DNS > Custom records):"
-Step '  Type: CNAME'
-Step "  Name: $subdomain"
-Step "  Data: $distDomain"
-if ($isApexHost) {
-  Step "note: DNS allows no CNAME at the apex ($apex). Point it at $distDomain with an ALIAS/ANAME record or a"
-  Step '      Route 53 alias A/AAAA record; a provider without those cannot serve the apex from CloudFront.'
-}
-Step "DONE. Distribution $distId at $distDomain"
+Set-CloudFrontAlias $domain $distDomain
+Step "DONE. Distribution $distId at $distDomain; https://$domain/ serves the UI once it is deployed"
 Read-Host 'Press Enter to close'

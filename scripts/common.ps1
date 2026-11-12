@@ -21,12 +21,8 @@ $profileName = $project.aws.profile
 $awsRegion   = $project.aws.region
 $domain      = $project.domain.host
 $apex        = $project.domain.apex
-$isApexHost  = $domain -eq $apex
-# The DNS record name at the provider: the host's part before the apex, or @ for the apex itself.
-$subdomain   = if ($isApexHost) { '@' } else { $domain -replace "\.$([regex]::Escape($apex))$", '' }
 # The API has its own CloudFront distribution at api.<host>, e.g. api.template-0.acombs-dev.com.
 $apiDomain    = "api.$domain"
-$apiSubdomain = if ($isApexHost) { 'api' } else { "api.$subdomain" }
 # ACM certificates used by CloudFront must be in us-east-1, whatever the app's region.
 $cloudFrontRegion = 'us-east-1'
 # The app's schema in the shared database: project.json database.schema, or else the app name in
@@ -72,6 +68,34 @@ function Invoke-AwsCli([string[]]$argv, [string]$Region = $awsRegion, [switch]$A
 }
 function Write-Utf8($path, $text) { [System.IO.File]::WriteAllText($path, $text, $utf8) }
 function Write-Json($path, $obj) { Write-Utf8 $path ($obj | ConvertTo-Json -Depth 20); return $path }
+
+# The apex's DNS is hosted in Route 53; the scripts write their records there themselves.
+# Z2FDTNDATAQYW2 is the fixed hosted zone ID AWS uses for every alias to a CloudFront distribution.
+$cloudFrontZoneId = 'Z2FDTNDATAQYW2'
+function Get-HostedZoneId {
+  $id = Invoke-AwsCli @('route53','list-hosted-zones-by-name','--dns-name',$apex,'--query',("HostedZones[?Name=='$apex.' && Config.PrivateZone==" + '`false`' + '].Id | [0]'),'--output','text')
+  if (-not $id -or $id -eq 'None') { Fail "No public Route 53 hosted zone for $apex." }
+  return $id -replace '^/hostedzone/', ''
+}
+# Creates or replaces Route 53 record sets (each a ResourceRecordSet hashtable) in the apex's zone
+# and waits until Route 53 serves them.
+function Set-DnsRecords([string]$Comment, [object[]]$RecordSets) {
+  $zoneId = Get-HostedZoneId
+  $batch = [ordered]@{ Comment = $Comment; Changes = @($RecordSets | ForEach-Object { @{ Action = 'UPSERT'; ResourceRecordSet = $_ } }) }
+  $file = Write-Json (Join-Path $logs 'dns-change.json') $batch
+  $changeId = Invoke-AwsCli @('route53','change-resource-record-sets','--hosted-zone-id',$zoneId,'--change-batch',"file://$file",'--query','ChangeInfo.Id','--output','text')
+  Invoke-AwsCli @('route53','wait','resource-record-sets-changed','--id',$changeId) | Out-Null
+  foreach ($r in $RecordSets) { Step "Route 53 record set: $($r.Name) $($r.Type)" }
+}
+# Points a host at a CloudFront distribution with alias A and AAAA records (which, unlike a CNAME,
+# also work at the apex).
+function Set-CloudFrontAlias([string]$HostName, [string]$DistDomain) {
+  $records = @('A','AAAA') | ForEach-Object {
+    [ordered]@{ Name = "$HostName."; Type = $_; AliasTarget = [ordered]@{ HostedZoneId = $cloudFrontZoneId; DNSName = "$DistDomain."; EvaluateTargetHealth = $false } }
+  }
+  Set-DnsRecords "$HostName -> CloudFront" $records
+}
+
 
 # Runs the npm that ships with the Node.js on PATH (its node_modules\npm\bin\npm-cli.js). Node's
 # npm.cmd hands over to a globally installed npm when there is one (e.g. an old one in %APPDATA%\npm),

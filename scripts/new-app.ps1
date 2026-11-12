@@ -141,8 +141,7 @@ if (-not $NoGit) {
 Step "DONE. Next, from $Destination in PowerShell (see README.md, Create a new app):"
 Step '  1. scripts\create-cognito-pool.ps1    2. scripts\apply-migrations.ps1    3. scripts\start-all.ps1'
 Step '  4. scripts\deploy-api.ps1, create-function-url.ps1'
-Step "  5. scripts\request-certificate.ps1 (add its CNAMEs at $($project.domain.dnsProvider))"
-Step '  6. scripts\create-ui-bucket.ps1, create-cloudfront.ps1, create-api-cloudfront.ps1'
-Step "  7. at $($project.domain.dnsProvider): CNAMEs for $HostName and api.$HostName to the CloudFront domains"
-Step '  8. push to GitHub, scripts\create-github-deploy-role.ps1, then run the CI workflow to deploy'
+Step '  5. scripts\request-certificate.ps1 (writes its DNS records to Route 53 and waits for the certificates)'
+Step '  6. scripts\create-ui-bucket.ps1, create-cloudfront.ps1, create-api-cloudfront.ps1 (with their DNS records)'
+Step '  7. push to GitHub, scripts\create-github-deploy-role.ps1, then run the CI workflow to deploy'
 Read-Host 'Press Enter to close'
