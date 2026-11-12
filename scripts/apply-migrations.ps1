@@ -1,4 +1,4 @@
-# Setup step 1 (database): creates the app's schema in the shared database and applies
+# Creates the app's schema in the shared database (provision.ps1 runs this) and applies
 # <app>-api\db\migrations\*.sql to it (see ApplyMigrations.java). Safe to re-run: migrations are
 # idempotent. -DryRun applies them and rolls back. Needs <app>-api\.env and the PostgreSQL driver
 # in ~\.m2 (any Maven build of the API downloads it). Log: logs\migrations.log
@@ -16,4 +16,4 @@ if ($DryRun) { $argv += '--dry-run' }
 & java @argv 2>&1 | ForEach-Object { Step "$_" }
 if ($LASTEXITCODE -ne 0) { Fail "migrations failed (exit $LASTEXITCODE); see logs\migrations.log" }
 Step 'DONE.'
-Read-Host 'Press Enter to close'
+Wait-Close

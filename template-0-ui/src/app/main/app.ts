@@ -18,7 +18,6 @@ import { RegistrationComponent } from '../auth/registration';
 import { AccountService } from './account/account.service';
 import { AccountDetailsComponent } from './account/account-details';
 import { ApiStatusService } from './api-status/api-status.service';
-import { apiUrl } from '../api-url';
 import { APP_DISPLAY_NAME, DEVELOPER_NAME } from './app-name';
 import { AboutDialogComponent } from './about/about-dialog';
 import { ToolbarBackgroundComponent } from '../theme/toolbar-background';
@@ -48,7 +47,7 @@ interface TechnologyGroup {
 export class App {
   protected readonly appName = APP_DISPLAY_NAME;
   protected readonly developerName = DEVELOPER_NAME;
-  protected readonly apiDocsUrl = apiUrl('/swagger-ui.html');
+  protected readonly apiDocsUrl = '/swagger-ui.html';
   protected readonly theme = inject(ThemeService);
   protected readonly auth = inject(AuthService);
   protected readonly account = inject(AccountService);

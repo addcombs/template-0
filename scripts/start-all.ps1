@@ -68,7 +68,7 @@ try {
 } catch {
   Step "FAILED: $($_.Exception.Message)"
   Write-Host "`nSetup failed: $($_.Exception.Message)" -ForegroundColor Red
-  Read-Host 'Press Enter to close'
+  Wait-Close
   exit 1
 }
 Step 'DONE'

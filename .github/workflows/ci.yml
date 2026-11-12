@@ -1,9 +1,9 @@
 # Builds and tests the UI and the API on every push and pull request, as scripts\start-all.ps1 does
 # locally. Pushes to main that pass, and runs started by hand on main (Actions > CI > Run workflow,
-# e.g. for a new app's first deploy), then deploy both, once scripts\create-github-deploy-role.ps1
-# has made the deploy role and its ARN is the repository's Actions variable AWS_DEPLOY_ROLE_ARN.
+# e.g. for a new app's first deploy), then deploy both, once scripts\provision.ps1 has made the
+# deploy role and set its ARN as the repository's Actions variable AWS_DEPLOY_ROLE_ARN.
 # The UI deploy also gives the Cognito sign-in page the theme colors. The deploy publishes new API
-# code only; the function's settings stay as deploy-api.ps1 set them, so no secrets are stored in GitHub.
+# code only; the function's settings stay as provision.ps1 set them, so no secrets are stored in GitHub.
 name: CI
 
 on:
@@ -69,8 +69,24 @@ jobs:
           cache: maven
       - run: mvn --batch-mode --no-transfer-progress verify
 
+  # The CDK stack is deployed from scripts\provision.ps1, not from here; this only type-checks it.
+  infra:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: infra/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+
   deploy-api:
-    needs: [ui, api]
+    needs: [ui, api, infra]
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ROLE_ARN != ''
     runs-on: ubuntu-latest
     permissions:
@@ -112,21 +128,22 @@ jobs:
           aws lambda update-alias --function-name "$APP-api" --name live --function-version "$version" \
             --query AliasArn --output text
           echo "::notice::API version $version is live."
+      # The site's distribution sends /api/* and /actuator/* to the function.
       - name: Check the live API
         run: |
           domain=$(jq -r .domain.host ../project.json)
-          curl --fail --silent --show-error --retry 5 --retry-delay 5 "https://api.$domain/actuator/health"
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 "https://$domain/actuator/health"
           # The health check is public, so it misses failures in the security chain (such as a 502 on
           # every signed-in request); without a token these must reach it and be refused with 401.
           for request in "GET /api/account" "PUT /api/account"; do
             status=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
-              --request "${request% *}" "https://api.$domain${request#* }")
+              --request "${request% *}" "https://$domain${request#* }")
             echo "$request without a token: $status"
             [ "$status" = 401 ] || { echo "::error::$request without a token returned $status, not 401."; exit 1; }
           done
 
   deploy-ui:
-    needs: [ui, api]
+    needs: [ui, api, infra]
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ROLE_ARN != ''
     runs-on: ubuntu-latest
     permissions:
@@ -137,11 +154,11 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v5
-      # new-app.ps1 leaves the Cognito IDs empty until create-cognito-pool.ps1 fills them in.
+      # new-app.ps1 leaves the Cognito IDs empty until provision.ps1 fills them in.
       - name: Check the UI settings have the Cognito IDs
         run: |
           grep -qE "userPoolId: '[^']+'" template-0-ui/src/app/project.settings.ts \
-            || { echo "::error::template-0-ui/src/app/project.settings.ts has no Cognito IDs. Run scripts\\create-cognito-pool.ps1 and commit the file."; exit 1; }
+            || { echo "::error::template-0-ui/src/app/project.settings.ts has no Cognito IDs. Run scripts\\provision.ps1."; exit 1; }
           echo "APP=$(jq -r .name project.json)" >> "$GITHUB_ENV"
           echo "DOMAIN=$(jq -r .domain.host project.json)" >> "$GITHUB_ENV"
           echo "AWS_REGION=$(jq -r .aws.region project.json)" >> "$GITHUB_ENV"

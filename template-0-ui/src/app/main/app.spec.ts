@@ -275,7 +275,7 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Authentication setup is required');
-    expect(fixture.nativeElement.textContent).toContain('scripts/create-cognito-pool.ps1');
+    expect(fixture.nativeElement.textContent).toContain('scripts/provision.ps1');
     expect(fixture.nativeElement.querySelector('mat-sidenav-container')).toBeNull();
   });
 

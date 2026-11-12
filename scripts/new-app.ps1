@@ -1,20 +1,22 @@
 # Creates a new app from this one: copies the project to a sibling folder (..\<name>) and renames
-# everything that carries the app's name, so the new app's scripts create its own AWS resources.
+# everything that carries the app's name, so the new app's stack creates its own AWS resources.
 #  - folders <app>-api and <app>-ui, and the Java package com.acombsdev.<app> (folders and code)
 #  - the app name, display name (e.g. Template 0), host, Cognito domain prefix and database schema
 #    in code, tests, build files and READMEs
 #  - the theme colours in the cards and README (start-all regenerates the palettes from project.json)
 #  - project.json (name, host, Cognito prefix, colours); the UI settings lose this app's Cognito
-#    IDs (create-cognito-pool writes the new ones)
+#    IDs (provision.ps1 writes the new ones)
 # Copies the files git tracks or would track (no logs, state, node_modules, target or build output),
 # plus the database login from <app>-api\.env, as the apps share one database. Then starts a git
-# repository with one commit (skip with -NoGit). Prompts for the name when not given.
+# repository with one commit (skip with -NoGit). Prompts for the name when not given. -Provision
+# then runs the new app's scripts\provision.ps1, which sets up its AWS resources, GitHub repository
+# and first deploy.
 # Log: logs\new-app.log
 #   scripts\new-app.ps1 -Name project-1 [-HostName project-1.acombs-dev.com] [-Primary '#RRGGBB']
-#     [-CognitoPrefix project-1-acombs] [-Destination <folder>] [-NoGit]
+#     [-CognitoPrefix project-1-acombs] [-Destination <folder>] [-NoGit] [-Provision]
 param(
   [string]$Name, [string]$HostName, [string]$Primary,
-  [string]$CognitoPrefix, [string]$Destination, [switch]$NoGit
+  [string]$CognitoPrefix, [string]$Destination, [switch]$NoGit, [switch]$Provision
 )
 . "$PSScriptRoot\common.ps1" -LogName 'new-app.log' -Title 'new app'
 
@@ -117,7 +119,7 @@ if ($newProject.database.schema) { Step "note: project.json sets database.schema
 Step 'project.json written'
 
 # The new .env keeps only the shared database login (and port); the app's schema is its own, and
-# its Cognito IDs come from its own config\cognito-pool.json once create-cognito-pool has run.
+# its Cognito IDs come from its own config\cognito-pool.json once provision.ps1 has run.
 $envFile = Join-Path $apiDir '.env'
 if (Test-Path $envFile) {
   $keep = Get-Content $envFile | Where-Object { $_ -match '^\s*(DATABASE_URL|DATABASE_USERNAME|DATABASE_PASSWORD|SERVER_PORT)\s*=' }
@@ -125,7 +127,7 @@ if (Test-Path $envFile) {
     $keep + @("DATABASE_SCHEMA=$newSchema")
   Write-Utf8 (Join-Path $Destination "$Name-api\.env") (($lines -join "`n") + "`n")
   Step "$Name-api\.env written with the shared database login and schema $newSchema (git-ignored)"
-} else { Step "note: no .env to copy; create $Name-api\.env before apply-migrations and deploy-api" }
+} else { Step "note: no .env to copy; create $Name-api\.env before provision.ps1" }
 
 $left = Get-ChildItem $Destination -Recurse -File | Select-String -Pattern $app -SimpleMatch -List
 if ($left) { Step "note: '$app' still appears in: $(($left.Path | ForEach-Object { $_.Substring($Destination.Length + 1) }) -join ', ')" }
@@ -138,10 +140,12 @@ if (-not $NoGit) {
   Step 'git repository started with one commit (no remote)'
 }
 
-Step "DONE. Next, from $Destination in PowerShell (see README.md, Create a new app):"
-Step '  1. scripts\create-cognito-pool.ps1    2. scripts\apply-migrations.ps1    3. scripts\start-all.ps1'
-Step '  4. scripts\deploy-api.ps1, create-function-url.ps1'
-Step '  5. scripts\request-certificate.ps1 (writes its DNS records to Route 53 and waits for the certificates)'
-Step '  6. scripts\create-ui-bucket.ps1, create-cloudfront.ps1, create-api-cloudfront.ps1 (with their DNS records)'
-Step '  7. push to GitHub, scripts\create-github-deploy-role.ps1, then run the CI workflow to deploy'
-Read-Host 'Press Enter to close'
+if ($Provision -and -not $NoGit) {
+  Step "running $Name's scripts\provision.ps1..."
+  & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Destination 'scripts\provision.ps1')
+  if ($LASTEXITCODE -ne 0) { Fail "provision.ps1 failed; see $Destination\logs\provision.log, then run it again from there." }
+} else {
+  Step "DONE. Next, from $Destination in PowerShell: scripts\provision.ps1 (AWS, GitHub and the first deploy),"
+  Step '  then scripts\start-all.ps1 to run it locally'
+}
+Wait-Close

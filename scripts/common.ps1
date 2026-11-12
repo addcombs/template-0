@@ -1,10 +1,10 @@
 # Shared setup for the scripts in this folder. Dot-source it first, e.g.
-#   . "$PSScriptRoot\common.ps1" -LogName 'cloudfront.log' -Title 'CloudFront'
-# Loads ..\project.json (the only per-app settings) and derives every AWS resource name from the app
-# name, so a new app needs only its own project.json. Folders under the project root:
+#   . "$PSScriptRoot\common.ps1" -LogName 'migrations.log' -Title 'database migrations'
+# Loads ..\project.json (the only per-app settings; infra\ derives every AWS resource name from it
+# too), so a new app needs only its own project.json. Folders under the project root:
 #   logs\    run logs and generated request files (git-ignored)
 #   config\  hand-maintained inputs, e.g. managed-login-branding.json, and cognito-pool.json, the
-#            Cognito IDs AWS assigned (written by create-cognito-pool.ps1, git-ignored)
+#            Cognito IDs AWS assigned (written by provision.ps1, git-ignored)
 # Native tools write normal output to stderr; Windows PowerShell 5 would treat that as a terminating
 # error under 'Stop', so failures are checked via exit codes.
 param([string]$LogName, [string]$Title, [switch]$AppendLog)
@@ -21,8 +21,6 @@ $profileName = $project.aws.profile
 $awsRegion   = $project.aws.region
 $domain      = $project.domain.host
 $apex        = $project.domain.apex
-# The API has its own CloudFront distribution at api.<host>, e.g. api.template-0.acombs-dev.com.
-$apiDomain    = "api.$domain"
 # ACM certificates used by CloudFront must be in us-east-1, whatever the app's region.
 $cloudFrontRegion = 'us-east-1'
 # The app's schema in the shared database: project.json database.schema, or else the app name in
@@ -32,29 +30,14 @@ $dbSchema = if ($project.database.schema) { $project.database.schema } else { ($
 $javaPackage = 'com.acombsdev.' + ($app -replace '[^A-Za-z0-9]', '').ToLowerInvariant()
 $apiDir = Join-Path $root "$app-api"
 $uiDir  = Join-Path $root "$app-ui"
-$names = [ordered]@{
-  Function     = "$app-api"
-  Role         = "$app-api-lambda"
-  DeployKey    = "$app-api-lambda.zip"
-  GitHubDeployRole = "$app-github-deploy"
-  UserPool     = "$app-users"
-  UserClient   = "$app-ui"
-  SignUpTrigger     = "$app-auto-confirm"
-  SignUpTriggerRole = "$app-auto-confirm-lambda"
-  Oac          = "$app-ui-oac"
-  # ACM idempotency tokens allow only letters and digits.
-  CertToken    = (($app -replace '[^A-Za-z0-9]', '') + 'cert')
-  ApiCertToken = (($app -replace '[^A-Za-z0-9]', '') + 'apicert')
-}
-# Buckets include the account ID because S3 bucket names are global.
-function UiBucket($account) { "$app-ui-$account" }
-function DeployBucket($account) { "$app-deploy-$account" }
 
 $log = Join-Path $logs $LogName
 if (-not $AppendLog) { Set-Content $log "$app $Title $(Get-Date -Format s)" }
 
 function Step($msg) { $line = "$(Get-Date -Format HH:mm:ss) $msg"; Write-Host $line -ForegroundColor Cyan; Add-Content $log $line }
-function Fail($msg) { Step "FAILED: $msg"; Write-Host "`nFailed: $msg" -ForegroundColor Red; Read-Host 'Press Enter to close'; exit 1 }
+# Keeps a script's window open at the end, unless provision.ps1 is running it.
+function Wait-Close { if (-not $env:SETUP_NO_PAUSE) { Read-Host 'Press Enter to close' | Out-Null } }
+function Fail($msg) { Step "FAILED: $msg"; Write-Host "`nFailed: $msg" -ForegroundColor Red; Wait-Close; exit 1 }
 # Runs the AWS CLI with the project's profile; returns its output text, or $null after an allowed
 # failure. -Quiet keeps output out of the log (for responses that can contain secrets); a failure is
 # still logged unless it was allowed.
@@ -69,14 +52,8 @@ function Invoke-AwsCli([string[]]$argv, [string]$Region = $awsRegion, [switch]$A
 function Write-Utf8($path, $text) { [System.IO.File]::WriteAllText($path, $text, $utf8) }
 function Write-Json($path, $obj) { Write-Utf8 $path ($obj | ConvertTo-Json -Depth 20); return $path }
 
-# The apex's DNS is hosted in Route 53; the scripts write their records there themselves.
-# Z2FDTNDATAQYW2 is the fixed hosted zone ID AWS uses for every alias to a CloudFront distribution.
-$cloudFrontZoneId = 'Z2FDTNDATAQYW2'
-function Get-HostedZoneId {
-  $id = Invoke-AwsCli @('route53','list-hosted-zones-by-name','--dns-name',$apex,'--query',("HostedZones[?Name=='$apex.' && Config.PrivateZone==" + '`false`' + '].Id | [0]'),'--output','text')
-  if (-not $id -or $id -eq 'None') { Fail "No public Route 53 hosted zone for $apex." }
-  return $id -replace '^/hostedzone/', ''
-}
+# The apex's DNS is hosted in Route 53; the CDK stack writes each app's alias records, and these
+# helpers the shared certificate's validation record.
 # Creates or replaces Route 53 record sets (each a ResourceRecordSet hashtable) in the apex's zone
 # and waits until Route 53 serves them.
 function Set-DnsRecords([string]$Comment, [object[]]$RecordSets) {
@@ -87,14 +64,45 @@ function Set-DnsRecords([string]$Comment, [object[]]$RecordSets) {
   Invoke-AwsCli @('route53','wait','resource-record-sets-changed','--id',$changeId) | Out-Null
   foreach ($r in $RecordSets) { Step "Route 53 record set: $($r.Name) $($r.Type)" }
 }
-# Points a host at a CloudFront distribution with alias A and AAAA records (which, unlike a CNAME,
-# also work at the apex).
-function Set-CloudFrontAlias([string]$HostName, [string]$DistDomain) {
-  $records = @('A','AAAA') | ForEach-Object {
-    [ordered]@{ Name = "$HostName."; Type = $_; AliasTarget = [ordered]@{ HostedZoneId = $cloudFrontZoneId; DNSName = "$DistDomain."; EvaluateTargetHealth = $false } }
+
+# The certificate for the apex and *.apex that every app's distribution shares, in us-east-1. The
+# first app set up requests it; its validation CNAME (one for both names) goes to Route 53, and it
+# stays there so ACM can renew the certificate. Returns the certificate's ARN once it is issued.
+function Get-SharedCertificate {
+  $wildcard = "*.$apex"
+  $arn = Invoke-AwsCli @('acm','list-certificates','--certificate-statuses','ISSUED','PENDING_VALIDATION','--query',
+    "CertificateSummaryList[?DomainName=='$apex' && contains(SubjectAlternativeNameSummaries, '$wildcard')].CertificateArn | [0]",'--output','text') -Region $cloudFrontRegion
+  if (-not $arn -or $arn -eq 'None') {
+    # ACM idempotency tokens allow only letters and digits.
+    $token = ($apex -replace '[^A-Za-z0-9]', '') + 'shared'
+    $arn = Invoke-AwsCli @('acm','request-certificate','--domain-name',$apex,'--subject-alternative-names',$wildcard,'--validation-method','DNS',
+      '--idempotency-token',$token,'--query','CertificateArn','--output','text') -Region $cloudFrontRegion
+    Step "shared certificate requested for $apex and ${wildcard}: $arn"
   }
-  Set-DnsRecords "$HostName -> CloudFront" $records
+  $status = Invoke-AwsCli @('acm','describe-certificate','--certificate-arn',$arn,'--query','Certificate.Status','--output','text') -Region $cloudFrontRegion
+  if ($status -ne 'ISSUED') {
+    # ACM needs a few seconds to generate the validation record.
+    $record = $null
+    for ($i = 0; $i -lt 12 -and -not $record; $i++) {
+      $rec = Invoke-AwsCli @('acm','describe-certificate','--certificate-arn',$arn,'--query',
+        'Certificate.DomainValidationOptions[0].ResourceRecord.[Name, Value]','--output','text') -Region $cloudFrontRegion
+      $name, $value = $rec -split '\s+'
+      if ($name -and $name -ne 'None') { $record = [ordered]@{ Name = $name; Type = 'CNAME'; TTL = 300; ResourceRecords = @(@{ Value = $value }) } } else { Start-Sleep 5 }
+    }
+    if (-not $record) { Fail 'ACM did not return the shared certificate''s validation record; run this again in a minute.' }
+    Set-DnsRecords "$apex shared certificate validation" @($record)
+    Step 'waiting for the shared certificate to be issued (usually a few minutes)...'
+    Invoke-AwsCli @('acm','wait','certificate-validated','--certificate-arn',$arn) -Region $cloudFrontRegion -AllowFail | Out-Null
+    $status = Invoke-AwsCli @('acm','describe-certificate','--certificate-arn',$arn,'--query','Certificate.Status','--output','text') -Region $cloudFrontRegion
+    if ($status -ne 'ISSUED') { Fail "The shared certificate is $status. Run this again later." }
+  }
+  Step "shared certificate: $arn"
+  return $arn
 }
+
+# The GitHub CLI: on PATH, or where its installer puts it.
+$gh = (Get-Command gh.exe -ErrorAction SilentlyContinue).Source
+if (-not $gh -and (Test-Path "$env:ProgramFiles\GitHub CLI\gh.exe")) { $gh = "$env:ProgramFiles\GitHub CLI\gh.exe" }
 
 
 # Runs the npm that ships with the Node.js on PATH (its node_modules\npm\bin\npm-cli.js). Node's
@@ -110,7 +118,7 @@ $npmCommand = if ($npmCli) { "& '$nodeExe' '$npmCli'" } else { '& npm.cmd' }
 
 $cognitoPoolFile = Join-Path $config 'cognito-pool.json'
 function Get-CognitoIds {
-  if (-not (Test-Path $cognitoPoolFile)) { Fail "config\cognito-pool.json not found. Run scripts\create-cognito-pool.ps1 first." }
+  if (-not (Test-Path $cognitoPoolFile)) { Fail "config\cognito-pool.json not found. Run scripts\provision.ps1 first." }
   return Get-Content $cognitoPoolFile -Raw | ConvertFrom-Json
 }
 
@@ -127,7 +135,6 @@ function Sync-UiConfig {
     "  appName: $(Ts $app),",
     "  displayName: $(Ts $project.displayName),",
     "  developerName: $(Ts $project.developerName),",
-    "  apiUrl: $(Ts "https://$apiDomain"),",
     '  auth: {',
     "    userPoolId: $(Ts $ids.userPoolId),",
     "    userPoolClientId: $(Ts $ids.userPoolClientId),",

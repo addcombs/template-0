@@ -4,7 +4,6 @@ export const PROJECT_SETTINGS = {
   appName: 'template-0',
   displayName: '',
   developerName: 'Adam Combs',
-  apiUrl: 'https://api.template-0.acombs-dev.com',
   auth: {
     userPoolId: 'us-east-2_0emwNES88',
     userPoolClientId: '5qhuobsct1th1047ctbdbdrate',

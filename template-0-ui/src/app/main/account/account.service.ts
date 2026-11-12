@@ -2,7 +2,6 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
 import { Injectable, inject, signal } from '@angular/core';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { firstValueFrom } from 'rxjs';
-import { apiUrl } from '../../api-url';
 
 export interface AccountDetails {
   email: string;
@@ -38,7 +37,7 @@ export class AccountService {
     try {
       const headers = await this.authHeaders();
       if (generation !== this.generation) return;
-      const details = await firstValueFrom(this.http.get<AccountDetails>(apiUrl('/api/account'), { headers }));
+      const details = await firstValueFrom(this.http.get<AccountDetails>('/api/account', { headers }));
       if (generation !== this.generation) return;
       this.details.set(details);
       this.state.set('ready');
@@ -62,7 +61,7 @@ export class AccountService {
     try {
       const headers = await this.authHeaders();
       if (generation !== this.generation) return;
-      const details = await firstValueFrom(this.http.put<AccountDetails>(apiUrl('/api/account'), update, { headers }));
+      const details = await firstValueFrom(this.http.put<AccountDetails>('/api/account', update, { headers }));
       if (generation !== this.generation) return;
       this.details.set(details);
       this.editing.set(false);
